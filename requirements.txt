@@ -1,0 +1,7 @@
+# Зависимости проекта
+PyQt5
+psycopg2-binary
+pymongo
+python-dotenv
+reportlab
+pandas
