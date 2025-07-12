@@ -1,0 +1,770 @@
+[
+    {
+        "_id": "e6fd1e47-8590-45b0-94bd-13df53ce984b",
+        "name": "Лиза",
+        "species": "Хомяк",
+        "breed": "Роборовский",
+        "birth_date": "2018-01-25",
+        "sex": "Ж",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79006031234",
+        "photo_path": "photos/photo4.jpg",
+        "medical_history": [
+            {
+                "date": "2023-10-20",
+                "symptoms": "потеря аппетита",
+                "diagnosis": "грипп",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan2.jpg", "lab1.pdf"]
+            },
+            {
+                "date": "2023-09-17",
+                "symptoms": "чихание",
+                "diagnosis": "бронхит",
+                "treatment": "противовирусные",
+                "attachments": ["lab2.pdf", "scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "966f0a22-7110-42c1-b916-4b1593a3c77a",
+        "name": "Рекс",
+        "species": "Хомяк",
+        "breed": "Роборовский",
+        "birth_date": "2021-08-29",
+        "sex": "М",
+        "owner_name": "Сидоров С.С.",
+        "owner_phone": "+79004461234",
+        "photo_path": "photos/photo4.jpg",
+        "medical_history": [
+            {
+                "date": "2025-07-05",
+                "symptoms": "слабость",
+                "diagnosis": "грипп",
+                "treatment": "диета",
+                "attachments": ["lab2.pdf", "scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "ecd7ee0c-49e4-4420-9a83-09061e78217b",
+        "name": "Мурка",
+        "species": "Попугай",
+        "breed": "Ара",
+        "birth_date": "2017-03-20",
+        "sex": "Ж",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79111291234",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2024-01-23",
+                "symptoms": "диарея, потеря аппетита",
+                "diagnosis": "аллергия",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["lab1.pdf", "lab2.pdf"]
+            },
+            {
+                "date": "2024-04-11",
+                "symptoms": "рвота, чихание, потеря аппетита",
+                "diagnosis": "пищевое отравление",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan3.jpg", "lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "3054ca3b-54bb-4f78-98fb-f27f9d506c25",
+        "name": "Макс",
+        "species": "Кошка",
+        "breed": "Британская",
+        "birth_date": "2018-04-02",
+        "sex": "М",
+        "owner_name": "Сидоров С.С.",
+        "owner_phone": "+79448831234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2024-12-05",
+                "symptoms": "слабость",
+                "diagnosis": "аллергия",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["lab2.pdf", "scan2.jpg"]
+            },
+            {
+                "date": "2025-03-31",
+                "symptoms": "слабость, рвота",
+                "diagnosis": "аллергия",
+                "treatment": "антигистаминные",
+                "attachments": ["scan1.jpg", "lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "b7c02292-3329-4b42-b597-f06813e631b0",
+        "name": "Рыжка",
+        "species": "Кролик",
+        "breed": "Рекс",
+        "birth_date": "2015-11-10",
+        "sex": "Ж",
+        "owner_name": "Сидоров С.С.",
+        "owner_phone": "+79442011234",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2023-08-18",
+                "symptoms": "слабость, рвота",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антигистаминные",
+                "attachments": ["scan2.jpg", "scan1.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "4db95d44-17b9-46c7-be35-de7458510cb9",
+        "name": "Макс",
+        "species": "Кролик",
+        "breed": "Рекс",
+        "birth_date": "2023-10-12",
+        "sex": "М",
+        "owner_name": "Сидоров С.С.",
+        "owner_phone": "+79112071234",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2024-09-05",
+                "symptoms": "кашель, диарея, рвота",
+                "diagnosis": "бронхит",
+                "treatment": "вливания жидкости",
+                "attachments": ["lab2.pdf", "lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "ae70e495-bec1-4497-bf11-6c04f5078a6d",
+        "name": "Рыжка",
+        "species": "Хомяк",
+        "breed": "Джунгарский",
+        "birth_date": "2011-10-29",
+        "sex": "Ж",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2025-05-08",
+                "symptoms": "диарея",
+                "diagnosis": "пищевое отравление",
+                "treatment": "вливания жидкости",
+                "attachments": ["lab1.pdf", "scan2.jpg"]
+            },
+            {
+                "date": "2024-05-13",
+                "symptoms": "чихание, кашель",
+                "diagnosis": "грипп",
+                "treatment": "противовирусные",
+                "attachments": ["lab2.pdf", "scan1.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "bd139793-030d-44d9-bef6-57a838f09cc3",
+        "name": "Мурка",
+        "species": "Кошка",
+        "breed": "Сиамская",
+        "birth_date": "2022-05-05",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79116901234",
+        "photo_path": "photos/photo3.jpg",
+        "medical_history": [
+            {
+                "date": "2024-09-07",
+                "symptoms": "потеря аппетита, диарея, слабость",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "278f7573-9c2d-48c3-a94b-987c34ad5371",
+        "name": "Снежка",
+        "species": "Кошка",
+        "breed": "Персидская",
+        "birth_date": "2017-08-23",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo4.jpg",
+        "medical_history": [
+            {
+                "date": "2025-05-25",
+                "symptoms": "чихание",
+                "diagnosis": "аллергия",
+                "treatment": "противовирусные",
+                "attachments": ["scan3.jpg", "scan1.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "85d02b75-0439-40fc-9d60-42b26786c1ca",
+        "name": "Белка",
+        "species": "Кошка",
+        "breed": "Сиамская",
+        "birth_date": "2023-11-04",
+        "sex": "Ж",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79225401234",
+        "photo_path": "photos/photo4.jpg",
+        "medical_history": [
+            {
+                "date": "2024-02-06",
+                "symptoms": "потеря аппетита, чихание, кашель",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антигистаминные",
+                "attachments": ["scan2.jpg", "scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "11d2f32f-13f3-4a50-9683-0569b4d4571d",
+        "name": "Тузик",
+        "species": "Кролик",
+        "breed": "Ангорский",
+        "birth_date": "2013-04-28",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo3.jpg",
+        "medical_history": [
+            {
+                "date": "2023-05-14",
+                "symptoms": "рвота, потеря аппетита",
+                "diagnosis": "бронхит",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "6a9f1e3e-5c3d-4ff4-8cd3-442ee529dd6a",
+        "name": "Барсик",
+        "species": "Хомяк",
+        "breed": "Роборовский",
+        "birth_date": "2011-06-19",
+        "sex": "М",
+        "owner_name": "Сидоров С.С.",
+        "owner_phone": "+79111291234",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2025-03-14",
+                "symptoms": "кашель, кашель",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антигистаминные",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2023-08-17",
+                "symptoms": "рвота, диарея",
+                "diagnosis": "аллергия",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "a45c7825-726b-4686-a813-808d9bb2548a",
+        "name": "Тузик",
+        "species": "Кролик",
+        "breed": "Рекс",
+        "birth_date": "2019-08-25",
+        "sex": "М",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79001234567",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2025-02-11",
+                "symptoms": "потеря аппетита, рвота",
+                "diagnosis": "аллергия",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2024-09-01",
+                "symptoms": "чихание, чихание, кашель",
+                "diagnosis": "бронхит",
+                "treatment": "антигистаминные",
+                "attachments": ["scan2.jpg", "lab2.pdf"]
+            },
+            {
+                "date": "2024-11-14",
+                "symptoms": "диарея, чихание, кашель",
+                "diagnosis": "грипп",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "5281de23-2174-46a6-a3bc-8d9072722998",
+        "name": "Тузик",
+        "species": "Попугай",
+        "breed": "Какаду",
+        "birth_date": "2020-09-23",
+        "sex": "Ж",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2025-11-04",
+                "symptoms": "чихание, слабость, кашель",
+                "diagnosis": "аллергия",
+                "treatment": "антигистаминные",
+                "attachments": ["scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "b83002f9-1eed-4167-9a11-70c0c4c59856",
+        "name": "Рекс",
+        "species": "Попугай",
+        "breed": "Какаду",
+        "birth_date": "2021-03-15",
+        "sex": "М",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79004441234",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2025-03-21",
+                "symptoms": "диарея, слабость",
+                "diagnosis": "грипп",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan2.jpg", "lab2.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "31ae6593-9206-41a7-9e2d-e003f94dc810",
+        "name": "Рекс",
+        "species": "Кошка",
+        "breed": "Британская",
+        "birth_date": "2023-07-07",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2024-10-28",
+                "symptoms": "слабость",
+                "diagnosis": "бронхит",
+                "treatment": "противовирусные",
+                "attachments": ["scan2.jpg", "lab2.pdf"]
+            },
+            {
+                "date": "2023-03-14",
+                "symptoms": "чихание, рвота",
+                "diagnosis": "пищевое отравление",
+                "treatment": "противовирусные",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2023-02-02",
+                "symptoms": "чихание, слабость, диарея",
+                "diagnosis": "аллергия",
+                "treatment": "диета",
+                "attachments": ["scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "95483585-da88-4552-8da2-9f25ca0301ec",
+        "name": "Лиза",
+        "species": "Кошка",
+        "breed": "Мейн-кун",
+        "birth_date": "2012-04-29",
+        "sex": "Ж",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79001234567",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2023-07-25",
+                "symptoms": "рвота, чихание, слабость",
+                "diagnosis": "пищевое отравление",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            },
+            {
+                "date": "2025-12-06",
+                "symptoms": "кашель",
+                "diagnosis": "грипп",
+                "treatment": "вливания жидкости",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "d4bee954-2e8e-4858-b1b7-6a7fb52ed5cd",
+        "name": "Рекс",
+        "species": "Кошка",
+        "breed": "Персидская",
+        "birth_date": "2023-10-03",
+        "sex": "М",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo3.jpg",
+        "medical_history": [
+            {
+                "date": "2024-09-03",
+                "symptoms": "слабость, кашель",
+                "diagnosis": "аллергия",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan1.jpg", "lab1.pdf"]
+            },
+            {
+                "date": "2024-08-15",
+                "symptoms": "слабость",
+                "diagnosis": "аллергия",
+                "treatment": "противовирусные",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            },
+            {
+                "date": "2024-05-22",
+                "symptoms": "кашель, кашель",
+                "diagnosis": "грипп",
+                "treatment": "диета",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "e241ccfa-5407-4fc5-8dbf-d5c7c40f9fdb",
+        "name": "Снежка",
+        "species": "Хомяк",
+        "breed": "Джунгарский",
+        "birth_date": "2024-06-16",
+        "sex": "Ж",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2023-02-03",
+                "symptoms": "слабость",
+                "diagnosis": "пищевое отравление",
+                "treatment": "противовирусные",
+                "attachments": ["lab1.pdf"]
+            },
+            {
+                "date": "2024-03-19",
+                "symptoms": "кашель",
+                "diagnosis": "бронхит",
+                "treatment": "диета",
+                "attachments": ["scan2.jpg", "lab2.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "0dde9bd7-5e7e-45ba-8db8-c8a2cd38f656",
+        "name": "Барсик",
+        "species": "Кошка",
+        "breed": "Персидская",
+        "birth_date": "2010-06-11",
+        "sex": "М",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79004441234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2023-02-06",
+                "symptoms": "слабость, диарея",
+                "diagnosis": "аллергия",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["lab1.pdf"]
+            },
+            {
+                "date": "2024-01-23",
+                "symptoms": "кашель, слабость, чихание",
+                "diagnosis": "аллергия",
+                "treatment": "диета",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "e04a6068-9ae5-4423-9ed4-fb643526915e",
+        "name": "Снежка",
+        "species": "Попугай",
+        "breed": "Какаду",
+        "birth_date": "2012-02-16",
+        "sex": "М",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2024-06-21",
+                "symptoms": "кашель, чихание",
+                "diagnosis": "аллергия",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["lab1.pdf"]
+            },
+            {
+                "date": "2023-11-01",
+                "symptoms": "слабость, потеря аппетита, слабость",
+                "diagnosis": "грипп",
+                "treatment": "диета",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "4566ac3c-357c-4333-9f41-ce104bc7ba36",
+        "name": "Рекс",
+        "species": "Хомяк",
+        "breed": "Джунгарский",
+        "birth_date": "2012-02-21",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2025-08-28",
+                "symptoms": "кашель, рвота",
+                "diagnosis": "пищевое отравление",
+                "treatment": "диета",
+                "attachments": ["lab1.pdf"]
+            },
+            {
+                "date": "2025-04-27",
+                "symptoms": "чихание, кашель, диарея",
+                "diagnosis": "бронхит",
+                "treatment": "противовирусные",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            },
+            {
+                "date": "2025-10-23",
+                "symptoms": "диарея, чихание, чихание",
+                "diagnosis": "пищевое отравление",
+                "treatment": "противовирусные",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "a9045b3f-1815-4fcf-8339-ac2d6e5394ac",
+        "name": "Рекс",
+        "species": "Хомяк",
+        "breed": "Джунгарский",
+        "birth_date": "2013-03-12",
+        "sex": "Ж",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79001234567",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2025-04-17",
+                "symptoms": "кашель",
+                "diagnosis": "аллергия",
+                "treatment": "диета",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            },
+            {
+                "date": "2024-10-09",
+                "symptoms": "слабость, потеря аппетита",
+                "diagnosis": "бронхит",
+                "treatment": "диета",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "20b47cef-f2af-4569-b1cd-5fc86fd306d2",
+        "name": "Кеша",
+        "species": "Хомяк",
+        "breed": "Джунгарский",
+        "birth_date": "2023-04-07",
+        "sex": "Ж",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79001234567",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2023-11-18",
+                "symptoms": "рвота, слабость, рвота",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антигистаминные",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "4e801e5b-6d7b-477b-970b-dc98650b29f9",
+        "name": "Снежка",
+        "species": "Собака",
+        "breed": "Овчарка",
+        "birth_date": "2023-03-09",
+        "sex": "М",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2024-05-06",
+                "symptoms": "диарея",
+                "diagnosis": "грипп",
+                "treatment": "противовирусные",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2023-02-17",
+                "symptoms": "чихание",
+                "diagnosis": "бронхит",
+                "treatment": "противовирусные",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2024-01-14",
+                "symptoms": "рвота",
+                "diagnosis": "грипп",
+                "treatment": "диета",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "94cafe76-d0c8-4532-8fb6-ef4dd088de6a",
+        "name": "Белка",
+        "species": "Попугай",
+        "breed": "Ара",
+        "birth_date": "2023-05-10",
+        "sex": "Ж",
+        "owner_name": "Иванов И.И.",
+        "owner_phone": "+79001234567",
+        "photo_path": "photos/photo2.jpg",
+        "medical_history": [
+            {
+                "date": "2025-07-05",
+                "symptoms": "диарея, чихание, чихание",
+                "diagnosis": "бронхит",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["scan1.jpg", "scan2.jpg"]
+            },
+            {
+                "date": "2023-08-30",
+                "symptoms": "рвота, чихание",
+                "diagnosis": "аллергия",
+                "treatment": "антигистаминные",
+                "attachments": ["scan3.jpg"]
+            }
+        ]
+    },
+    {
+        "_id": "ad83cb9c-3fc2-4295-8355-4b52d37002d3",
+        "name": "Белка",
+        "species": "Кролик",
+        "breed": "Ангорский",
+        "birth_date": "2021-08-10",
+        "sex": "Ж",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo3.jpg",
+        "medical_history": [
+            {
+                "date": "2023-09-09",
+                "symptoms": "потеря аппетита, потеря аппетита, кашель",
+                "diagnosis": "грипп",
+                "treatment": "антигистаминные",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "d23c4c7c-95db-401e-b544-e48239376403",
+        "name": "Рекс",
+        "species": "Попугай",
+        "breed": "Какаду",
+        "birth_date": "2010-07-07",
+        "sex": "М",
+        "owner_name": "Смирнова С.С.",
+        "owner_phone": "+79221871234",
+        "photo_path": "photos/photo4.jpg",
+        "medical_history": [
+            {
+                "date": "2023-12-19",
+                "symptoms": "слабость, чихание, слабость",
+                "diagnosis": "грипп",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["lab1.pdf"]
+            },
+            {
+                "date": "2024-06-11",
+                "symptoms": "диарея, диарея, потеря аппетита",
+                "diagnosis": "грипп",
+                "treatment": "антигистаминные",
+                "attachments": ["scan1.jpg", "lab1.pdf"]
+            },
+            {
+                "date": "2023-09-22",
+                "symptoms": "потеря аппетита, рвота",
+                "diagnosis": "пищевое отравление",
+                "treatment": "вливания жидкости",
+                "attachments": ["lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "ff345d8b-965e-4e15-8f63-389c49727f8d",
+        "name": "Мурка",
+        "species": "Кролик",
+        "breed": "Рекс",
+        "birth_date": "2019-08-23",
+        "sex": "М",
+        "owner_name": "Кузнецов К.К.",
+        "owner_phone": "+79338561234",
+        "photo_path": "photos/photo1.jpg",
+        "medical_history": [
+            {
+                "date": "2025-02-22",
+                "symptoms": "рвота",
+                "diagnosis": "бронхит",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan1.jpg", "lab1.pdf"]
+            }
+        ]
+    },
+    {
+        "_id": "a2cc1433-eb37-454e-a1f8-7c54fecf2ce7",
+        "name": "Барсик",
+        "species": "Попугай",
+        "breed": "Ара",
+        "birth_date": "2012-09-24",
+        "sex": "Ж",
+        "owner_name": "Петров П.П.",
+        "owner_phone": "+79004441234",
+        "photo_path": "photos/photo5.jpg",
+        "medical_history": [
+            {
+                "date": "2024-06-22",
+                "symptoms": "кашель",
+                "diagnosis": "аллергия",
+                "treatment": "вливания жидкости",
+                "attachments": ["scan3.jpg"]
+            },
+            {
+                "date": "2023-12-14",
+                "symptoms": "диарея",
+                "diagnosis": "пищевое отравление",
+                "treatment": "антибиотики 5 дней",
+                "attachments": ["scan2.jpg", "lab2.pdf"]
+            }
+        ]
+    }
+]
