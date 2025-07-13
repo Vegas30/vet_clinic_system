@@ -1,5 +1,5 @@
 # Зависимости проекта
-PyQt5
+PyQt6
 psycopg2-binary
 pymongo
 python-dotenv
