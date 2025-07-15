@@ -1,5 +1,6 @@
 # Точка входа в приложение ветклиники
 import sys
+
 from PyQt6.QtWidgets import QApplication, QDialog
 import logging
 from datetime import datetime
@@ -74,4 +75,6 @@ def main():
 
 
 if __name__ == "__main__":
+
+
     main()

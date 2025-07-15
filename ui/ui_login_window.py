@@ -164,4 +164,4 @@ class LoginWindow(QWidget):
         self.login_input.clear()
         self.password_input.clear()
 
-# TODO: Реализовать окно входа (PyQt5)
+# TODO: Реализовать окно входа (PyQt6)
