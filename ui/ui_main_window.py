@@ -6,10 +6,10 @@ from PyQt6.QtCore import Qt
 # from ui.ui_reports_widget import ReportsWidget
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, user_data):
         super().__init__()
-        # self.user_data = user_data
-        # self.setWindowTitle(f"Ветеринарная клиника - {user_data['role']}: {user_data['full_name']}")
+        self.user_data = user_data
+        self.setWindowTitle(f"Ветеринарная клиника - {user_data['role']}: {user_data['full_name']}")
         self.setGeometry(100, 100, 1024, 768)
 
         self.tab_widget = QTabWidget()
