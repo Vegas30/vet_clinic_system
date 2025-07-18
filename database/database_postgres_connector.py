@@ -35,3 +35,4 @@ class PostgresConnector:
 
     def get_cursor(self):
         return self.cur
+

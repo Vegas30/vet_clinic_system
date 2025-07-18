@@ -7,6 +7,7 @@ from datetime import datetime
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
 
+
 logging.basicConfig(
     filename=f'app_errors_{datetime.now().strftime("%Y-%m-%d")}.log',
     level=logging.DEBUG,
@@ -73,8 +74,5 @@ def main():
         logging.critical(f"Fatal error: {str(e)}", exc_info=True)
         sys.exit(1)
 
-
 if __name__ == "__main__":
-
-
     main()

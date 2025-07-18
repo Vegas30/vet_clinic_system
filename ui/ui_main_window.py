@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
-# from ui.ui_animals_widget import AnimalsWidget
+from ui.ui_animals_widget import AnimalsWidget
 # from ui.ui_appointments_widget import AppointmentsWidget
 # from ui.ui_staff_widget import StaffWidget
 # from ui.ui_reports_widget import ReportsWidget
@@ -19,10 +19,10 @@ class MainWindow(QMainWindow):
 
     def init_tabs(self):
         # Вкладка Животные
-        # self.animals_widget = AnimalsWidget()
-        # self.tab_widget.addTab(self.animals_widget, "Животные")
-        self.animals_tab = QWidget()
-        self.tab_widget.addTab(self.animals_tab, "Животные")
+        self.animals_widget = AnimalsWidget()
+        self.tab_widget.addTab(self.animals_widget, "Животные")
+        # self.animals_tab = QWidget()
+        # self.tab_widget.addTab(self.animals_tab, "Животные")
 
         # Вкладка Приёмы
         # self.appointments_widget = AppointmentsWidget()
@@ -35,6 +35,14 @@ class MainWindow(QMainWindow):
         # self.tab_widget.addTab(self.staff_widget, "Сотрудники")
         self.staff_widget = QWidget()
         self.tab_widget.addTab(self.staff_widget, "Сотрудники")
+
+        # if self.user_data['role'] == 'admin':
+        #     self.staff_widget = StaffWidget(self.user_data)
+        #     self.tab_widget.addTab(self.staff_widget, "Сотрудники")
+        # else:
+        #     # Для не-админов скрываем вкладку сотрудников
+        #     self.staff_widget = None
+
 
         # Вкладка Отчёты
         # self.reports_widget = ReportsWidget()

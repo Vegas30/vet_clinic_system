@@ -1,6 +1,7 @@
 # Классы и SQL-запросы к PostgreSQL
 from database.database_postgres_connector import PostgresConnector
 
+
 class PostgresModels:
     def __init__(self):
         self.db = PostgresConnector()
@@ -310,5 +311,42 @@ class PostgresModels:
                 return True
         except Exception as e:
             print(f"Ошибка при обновлении пароля сотрудника: {e}")
+        finally:
+            self.db.disconnect()
+
+    def get_appointments_by_animal_id(self, animal_id):
+        sql = """
+        SELECT id, animal_id, vet_id, date, time, service_id, status, notes 
+        FROM Приёмы 
+        WHERE animal_id = %s
+        ORDER BY date DESC, time DESC
+        """
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (animal_id,))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при получении приёмов по животному: {e}")
+        finally:
+            self.db.disconnect()
+
+    def update_appointment(self, visit_id, vet_id, date, time, service_id, status, notes=""):
+        sql = """
+        UPDATE Приёмы 
+        SET vet_id = %s, date = %s, time = %s, service_id = %s, status = %s, notes = %s
+        WHERE id = %s
+        """
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (vet_id, date, time, service_id, status, notes, visit_id))
+                conn.commit()
+                print(f"Приём с ID {visit_id} успешно обновлен.")
+                return True
+        except Exception as e:
+            print(f"Ошибка при обновлении приёма: {e}")
         finally:
             self.db.disconnect()
