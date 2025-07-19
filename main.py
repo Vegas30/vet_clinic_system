@@ -8,12 +8,12 @@ from datetime import datetime
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
 
-
 logging.basicConfig(
     filename=f'app_errors_{datetime.now().strftime("%Y-%m-%d")}.log',
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
 
 def create_test_user():
     """Создание тестового пользователя для отладки"""
@@ -27,6 +27,15 @@ def create_test_user():
         branch_id=1
     )
     print("Тестовый пользователь создан: login='test', password='test'")
+
+
+def add(a, b):
+    return a + b
+
+
+def subtract(a, b):
+    return (a - b)
+
 
 def main():
     try:
@@ -77,6 +86,4 @@ def main():
 
 
 if __name__ == "__main__":
-
-
     main()
