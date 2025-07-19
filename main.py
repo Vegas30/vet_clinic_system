@@ -5,9 +5,6 @@ from PyQt6.QtWidgets import QApplication, QDialog
 import logging
 from datetime import datetime
 
-from pymongo.hello import Hello
-from reportlab.graphics.barcode.eanbc import words
-
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
 
