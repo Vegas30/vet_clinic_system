@@ -4,6 +4,10 @@ import sys
 from PyQt6.QtWidgets import QApplication, QDialog
 import logging
 from datetime import datetime
+
+from pymongo.hello import Hello
+from reportlab.graphics.barcode.eanbc import words
+
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
 
@@ -74,5 +78,8 @@ def main():
         logging.critical(f"Fatal error: {str(e)}", exc_info=True)
         sys.exit(1)
 
+
 if __name__ == "__main__":
+
+
     main()
