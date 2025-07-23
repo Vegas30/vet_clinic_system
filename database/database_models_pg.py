@@ -1,4 +1,9 @@
 # Классы и SQL-запросы к PostgreSQL
+import datetime
+
+from PyQt6.QtCore import QDate
+import logging
+
 from database.database_postgres_connector import PostgresConnector
 
 
@@ -241,35 +246,6 @@ class PostgresModels:
         finally:
             self.db.disconnect()
 
-    def insert_appointment(self, animal_id, vet_id, date, time, service_id, status):
-        sql = "INSERT INTO Приёмы (animal_id, vet_id, date, time, service_id, status) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;"
-        try:
-            conn = self.db.connect()
-            cur = self.db.get_cursor()
-            if conn and cur:
-                cur.execute(sql, (animal_id, vet_id, date, time, service_id, status))
-                appointment_id = cur.fetchone()[0]
-                conn.commit()
-                print(f"Приём успешно добавлен с ID: {appointment_id}")
-                return appointment_id
-        except Exception as e:
-            print(f"Ошибка при добавлении приёма: {e}")
-        finally:
-            self.db.disconnect()
-
-    def get_appointments_by_vet_and_date(self, vet_id, date):
-        sql = "SELECT id, animal_id, vet_id, date, time, service_id, status FROM Приёмы WHERE vet_id = %s AND date = %s;"
-        try:
-            conn = self.db.connect()
-            cur = self.db.get_cursor()
-            if conn and cur:
-                cur.execute(sql, (vet_id, date))
-                return cur.fetchall()
-        except Exception as e:
-            print(f"Ошибка при получении приёмов по врачу и дате: {e}")
-        finally:
-            self.db.disconnect()
-
     def insert_login_log(self, user_id, event_type):
         sql = "INSERT INTO Журнал_входа (user_id, event_type) VALUES (%s, %s) RETURNING id;"
         try:
@@ -314,39 +290,188 @@ class PostgresModels:
         finally:
             self.db.disconnect()
 
-    def get_appointments_by_animal_id(self, animal_id):
-        sql = """
-        SELECT id, animal_id, vet_id, date, time, service_id, status, notes 
-        FROM Приёмы 
-        WHERE animal_id = %s
-        ORDER BY date DESC, time DESC
+    def get_appointment_by_id(self, id):
         """
-        try:
-            conn = self.db.connect()
-            cur = self.db.get_cursor()
-            if conn and cur:
-                cur.execute(sql, (animal_id,))
-                return cur.fetchall()
-        except Exception as e:
-            print(f"Ошибка при получении приёмов по животному: {e}")
-        finally:
-            self.db.disconnect()
-
-    def update_appointment(self, visit_id, vet_id, date, time, service_id, status, notes=""):
+        Получает приём по ID.
+        Args: id (int): ID приёма
+        Returns: tuple: Данные приёма
+        """
         sql = """
-        UPDATE Приёмы 
-        SET vet_id = %s, date = %s, time = %s, service_id = %s, status = %s, notes = %s
+        SELECT id, animal_id, vet_id, date, time, service_id, status 
+        FROM Приёмы
         WHERE id = %s
         """
         try:
             conn = self.db.connect()
             cur = self.db.get_cursor()
             if conn and cur:
-                cur.execute(sql, (vet_id, date, time, service_id, status, notes, visit_id))
+                cur.execute(sql, (id,))
+                return cur.fetchone()
+        except Exception as e:
+            print(f"Ошибка при получении приёма по ID: {e}")
+        finally:
+            self.db.disconnect()
+
+    def get_appointments_by_date(self, date, status=None):
+        """
+        Получает приёмы на указанную дату с опциональной фильтрацией по статусу.
+        Args:
+            date (str): Дата в формате 'YYYY-MM-DD'
+            status (str, optional): Статус приёма для фильтрации
+        Returns:
+            list: Список приёмов
+        """
+        sql = """
+        SELECT id, animal_id, vet_id, date, time, service_id, status
+        FROM Приёмы
+        WHERE date = %s
+        """
+        params = [date]
+
+        if status:
+            sql += " AND status = %s"
+            params.append(status)
+
+        try:
+            conn = self.db.connect()
+            if not conn:
+                raise Exception("Не удалось подключиться к базе данных")
+
+            with conn.cursor() as cur:
+                cur.execute(sql, tuple(params))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при получении приёмов по дате: {e}")
+            return []
+        finally:
+            self.db.disconnect()
+
+    def update_appointment(self, id, animal_id, vet_id, date, time, service_id, status):
+        """
+        Обновляет данные приёма.
+
+        Args:
+            id (int): ID приёма
+            animal_id (str): ID животного
+            vet_id (int): ID ветеринара
+            date (str): Дата в формате 'YYYY-MM-DD'
+            time (str): Время в формате 'HH:MM'
+            service_id (int): ID услуги
+            status (str): Статус приёма
+
+        Returns:
+            bool: True при успешном обновлении
+        """
+        sql = """
+        UPDATE Приёмы
+        SET animal_id = %s,
+            vet_id = %s,
+            date = %s,
+            time = %s,
+            service_id = %s,
+            status = %s
+        WHERE id = %s
+        """
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (animal_id, vet_id, date, time, service_id, status, id))
                 conn.commit()
-                print(f"Приём с ID {visit_id} успешно обновлен.")
-                return True
+                return cur.rowcount > 0
         except Exception as e:
             print(f"Ошибка при обновлении приёма: {e}")
         finally:
             self.db.disconnect()
+        return False
+
+    def delete_appointment(self, id):
+        """
+        Удаляет приём.
+        Args:
+            id (int): ID приёма
+        Returns:
+            bool: True при успешном удалении
+        """
+        sql = "DELETE FROM Приёмы WHERE id = %s"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (id,))
+                conn.commit()
+                return cur.rowcount > 0
+        except Exception as e:
+            print(f"Ошибка при удалении приёма: {e}")
+        finally:
+            self.db.disconnect()
+        return False
+
+    def insert_appointment(self, animal_id, vet_id, date, time, service_id, status):
+        """
+        Добавляет новый приём в базу данных
+
+        Args:
+            animal_id (str): ID животного
+            vet_id (int): ID ветеринара
+            date (str): Дата в формате 'YYYY-MM-DD'
+            time (str): Время в формате 'HH:MM'
+            service_id (int): ID услуги
+            status (str): Статус приёма
+
+        Returns:
+            int: ID созданного приёма или None при ошибке
+        """
+        sql = """
+        INSERT INTO Приёмы (animal_id, vet_id, date, time, service_id, status)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        """
+        try:
+            conn = self.db.connect()
+            with conn.cursor() as cur:
+                cur.execute(sql, (animal_id, vet_id, date, time, service_id, status))
+                appointment_id = cur.fetchone()[0]
+                conn.commit()
+                return appointment_id
+        except Exception as e:
+            print(f"Ошибка при добавлении приёма: {e}")
+            return None
+        finally:
+            if conn:
+                self.db.disconnect()
+
+    def check_vet_availability(self, vet_id, date, time, exclude_id=None):
+        """
+        Проверяет доступность ветеринара в указанное время
+
+        Args:
+            vet_id (int): ID ветеринара
+            date (str): Дата в формате 'YYYY-MM-DD'
+            time (str): Время в формате 'HH:MM'
+            exclude_id (int, optional): ID приёма для исключения (при редактировании)
+
+        Returns:
+            bool: True если время занято, False если свободно
+        """
+        sql = """
+        SELECT id FROM Приёмы
+        WHERE vet_id = %s AND date = %s AND time = %s AND status != 'отменен'
+        """
+        params = [vet_id, date, time]
+
+        if exclude_id:
+            sql += " AND id != %s"
+            params.append(exclude_id)
+
+        try:
+            conn = self.db.connect()
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchone() is not None
+        except Exception as e:
+            print(f"Ошибка при проверке доступности ветеринара: {e}")
+            return True
+        finally:
+            if conn:
+                self.db.disconnect()

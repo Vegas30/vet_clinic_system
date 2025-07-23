@@ -84,6 +84,5 @@ def main():
         logging.critical(f"Fatal error: {str(e)}", exc_info=True)
         sys.exit(1)
 
-
 if __name__ == "__main__":
     main()
