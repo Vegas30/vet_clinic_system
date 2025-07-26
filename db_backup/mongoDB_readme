@@ -1,6 +1,6 @@
 имя базы данных MongoDB:
 vet_clinic_mDB
 коллекция называется:
-aminals
+animals
 
 файл animals.json содержит данные для импорта в базу данных vet_clinic_mDB

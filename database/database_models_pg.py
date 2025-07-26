@@ -73,7 +73,22 @@ class PostgresModels:
         finally:
             self.db.disconnect()
 
-    def insert_branch(self, name, address, phone):
+    def insert_branch(self, branch_data):
+        """ Добавляет новый филиал в базу данных.
+        Args:
+            branch_data (dict): Словарь с данными филиала, например:
+                {
+                    "name": "Название Филиала",
+                    "address": "Адрес Филиала",
+                    "phone": "Телефон Филиала"
+                }
+        Returns:
+            int: ID созданного филиала или None при ошибке
+        """
+        name = branch_data.get("name")
+        address = branch_data.get("address")
+        phone = branch_data.get("phone")
+        
         sql = "INSERT INTO Филиалы (name, address, phone) VALUES (%s, %s, %s) RETURNING id;"
         try:
             conn = self.db.connect()
@@ -99,6 +114,80 @@ class PostgresModels:
                 return cur.fetchall()
         except Exception as e:
             print(f"Ошибка при получении всех филиалов: {e}")
+        finally:
+            self.db.disconnect()
+
+    def delete_branch(self, branch_id):
+        sql = "DELETE FROM Филиалы WHERE id = %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (branch_id,))
+                conn.commit()
+                print(f"Филиал с ID {branch_id} успешно удален.")
+                return True
+        except Exception as e:
+            print(f"Ошибка при удалении филиала: {e}")
+        finally:
+            self.db.disconnect()
+
+    def update_branch(self, branch_id, update_data):
+        """
+        Обновляет данные филиала по ID.
+
+        Args:
+            branch_id (int): ID филиала
+            update_data (dict): Словарь с данными для обновления, например:
+                {
+                    "name": "Новый Название",
+                    "address": "Новый Адрес",
+                    "phone": "Новый Телефон"
+                }
+
+        Returns:
+            bool: True при успешном обновлении, False в противном случае
+        """
+        sql = "UPDATE Филиалы SET "
+        params = []
+        for key, value in update_data.items():
+            sql += f"{key} = %s, "
+            params.append(value)
+        sql = sql.rstrip(", ") + " WHERE id = %s;"
+        params.append(branch_id)
+
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, tuple(params))
+                conn.commit()
+                print(f"Филиал с ID {branch_id} успешно обновлен.")
+                return True
+        except Exception as e:
+            print(f"Ошибка при обновлении филиала: {e}")
+        finally:
+            self.db.disconnect()
+
+    def get_branch_by_id(self, branch_id):
+        """
+        Получает филиал по ID.
+
+        Args:
+            branch_id (int): ID филиала
+
+        Returns:
+            tuple: Данные филиала (id, name, address, phone) или None, если не найден
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы WHERE id = %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (branch_id,))
+                return cur.fetchone()
+        except Exception as e:
+            print(f"Ошибка при получении филиала по ID: {e}")
         finally:
             self.db.disconnect()
 
