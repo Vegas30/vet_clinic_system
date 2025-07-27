@@ -22,10 +22,11 @@ class MainWindow(QMainWindow):
         self.animals_widget = AnimalsWidget()
         self.tab_widget.addTab(self.animals_widget, "Животные")
 
+
         # Вкладка Приёмы
         self.appointments_widget = AppointmentsWidget(self.user_data)
         self.tab_widget.addTab(self.appointments_widget, "Приёмы")
-        self.appointments_widget.data_updated.connect(self.handle_appointments_update)
+        self.appointments_widget.data_updated.connect(self.handle_data_update)
 
         # Вкладка Сотрудники
         # self.staff_widget = StaffWidget()
@@ -40,13 +41,13 @@ class MainWindow(QMainWindow):
         #     # Для не-админов скрываем вкладку сотрудников
         #     self.staff_widget = None
 
-
         # Вкладка Отчёты
         # self.reports_widget = ReportsWidget()
         # self.tab_widget.addTab(self.reports_widget, "Отчёты")
         self.reports_widget = QWidget()
         self.tab_widget.addTab(self.reports_widget, "Отчёты")
 
-    def handle_appointments_update(self):
-        """Обновляет данные после изменений в приёмах"""
-        self.appointments_widget.load_appointments()
+    def handle_data_update(self):
+        """Обновляет данные во всех виджетах при изменении"""
+        self.animals_widget.load_all_animals()  # Перезагружаем список животных
+        self.appointments_widget.load_appointments()  # Перезагружаем список приёмы
