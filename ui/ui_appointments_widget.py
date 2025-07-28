@@ -2,16 +2,16 @@
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
-    QTableWidgetItem, QHeaderView, QDateEdit, QComboBox, QCompleter,  QDialog, QFormLayout,
-    QMessageBox, QTimeEdit, QGroupBox, QAbstractItemView, QStyledItemDelegate, QCalendarWidget, QTextEdit
+    QTableWidgetItem, QHeaderView, QDateEdit, QComboBox, QCompleter, QDialog, QFormLayout,
+    QMessageBox, QTimeEdit, QGroupBox, QAbstractItemView, QStyledItemDelegate, QCalendarWidget, QTextEdit, QLineEdit
 )
 from PyQt6.QtCore import Qt, QDate, QTime, pyqtSignal
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPalette
 from database.database_models_pg import PostgresModels
 from database.database_models_mongo import MongoDBModels
 from datetime import datetime, timedelta
 import logging
-
+from logic.logic_calendar_utils import CalendarUtils
 
 class AppointmentsWidget(QWidget):
     """Виджет для управления приёмами в ветеринарной клинике."""
@@ -33,6 +33,7 @@ class AppointmentsWidget(QWidget):
         self.selected_date = QDate.currentDate()
         self.init_ui()
         self.load_appointments()
+        self.calendar_utils = CalendarUtils()
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса."""
@@ -165,6 +166,10 @@ class AppointmentsWidget(QWidget):
                 # Получаем данные услуги
                 service = self.db_pg.get_service_by_id(service_id)
                 service_name = service[1] if service else "Услуга не найдена"
+                service_price = f"{service[3]:.2f} ₽" if service else "0.00 ₽"
+
+                # Изменяем отображение названия услуги
+                service_display = f"{service_name}"
 
                 # Заполняем строку таблицы
                 self.appointments_table.setItem(row, 0, QTableWidgetItem(str(appt_id)))
@@ -172,8 +177,9 @@ class AppointmentsWidget(QWidget):
                 self.appointments_table.setItem(row, 2, QTableWidgetItem(time.strftime("%H:%M")))
                 self.appointments_table.setItem(row, 3, QTableWidgetItem(animal_name))
                 self.appointments_table.setItem(row, 4, QTableWidgetItem(vet_name))
-                self.appointments_table.setItem(row, 5, QTableWidgetItem(service_name))
+                self.appointments_table.setItem(row, 5, QTableWidgetItem(service_display))
                 self.appointments_table.setItem(row, 6, QTableWidgetItem(status))
+
 
                 # Сохраняем ID приёма в пользовательские данные
                 for col in range(self.appointments_table.columnCount()):
@@ -203,15 +209,14 @@ class AppointmentsWidget(QWidget):
 
     def add_appointment(self):
         """Открывает диалог для добавления нового приёма."""
-        print("DEBUG: Trying to open appointment dialog")
         try:
             dialog = AppointmentDialog(self.user_data, self.db_pg, self.db_mongo)
-            print("DEBUG: Dialog created successfully")
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 self.load_appointments()
+                self.data_updated.emit()
         except Exception as e:
-            print(f"CRITICAL ERROR: {str(e)}")
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть диалог: {str(e)}")
+            logging.error(f"Ошибка при открытии диалога добавления приёма: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть диалог добавления приёма: {str(e)}")
 
     def edit_appointment(self):
         """Открывает диалог для редактирования выбранного приёма"""
@@ -260,26 +265,39 @@ class AppointmentsWidget(QWidget):
                     f"Не удалось удалить приём: {str(e)}"
                 )
 
+    def date_changed(self, date):
+        """Обработчик изменения даты"""
+        if not self.calendar_utils.is_working_day(date):
+            QMessageBox.information(self, "Выходной", "В выбранный день клиника не работает")
+            self.date_edit.setDate(QDate.currentDate())
+        else:
+            self.selected_date = date
+            self.load_appointments()
+
 
 class AppointmentDialog(QDialog):
     """Диалоговое окно для добавления/редактирования приёма."""
 
     def __init__(self, user_data, db_pg, db_mongo, appointment_id=None):
         super().__init__()
+        self.calendar_utils = CalendarUtils()
         self.user_data = user_data
         self.db_pg = db_pg
         self.db_mongo = db_mongo
         self.appointment_id = appointment_id
         self.is_edit_mode = appointment_id is not None
 
-        self.setWindowTitle("Редактировать приём" if self.is_edit_mode else "Добавить приём")
+        self.setWindowTitle("Добавить приём" if not self.is_edit_mode else "Редактировать приём")
         self.setMinimumSize(500, 400)
 
         self.init_ui()
         self.load_data()
 
-        if self.is_edit_mode:
-            self.load_appointment_data()
+        # Устанавливаем текущего ветеринара по умолчанию, если это не редактирование
+        if not self.is_edit_mode:
+            self.set_default_values()
+        else:
+            self.load_appointment_data()  # Загружаем данные при редактировании
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса."""
@@ -289,11 +307,15 @@ class AppointmentDialog(QDialog):
         form_layout = QFormLayout()
 
         # Животное
+        animal_layout = QHBoxLayout()
         self.animal_combo = QComboBox()
         self.animal_combo.setEditable(True)
         self.animal_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-
-        form_layout.addRow("Животное:", self.animal_combo)
+        add_animal_btn = QPushButton("Добавить")
+        add_animal_btn.clicked.connect(self.show_add_animal_dialog)
+        animal_layout.addWidget(self.animal_combo)
+        animal_layout.addWidget(add_animal_btn)
+        form_layout.addRow("Животное:", animal_layout)
 
         # Врач
         self.vet_combo = QComboBox()
@@ -301,7 +323,13 @@ class AppointmentDialog(QDialog):
 
         # Услуга
         self.service_combo = QComboBox()
+        self.service_combo.currentIndexChanged.connect(self.update_service_price)
         form_layout.addRow("Услуга:", self.service_combo)
+
+        # Цена услуги
+        self.price_label = QLabel("0.00 ₽")
+        self.price_label.setStyleSheet("font-weight: bold; color: #2a5caa;")
+        form_layout.addRow("Стоимость:", self.price_label)
 
         # Дата
         self.date_edit = QDateEdit()
@@ -313,6 +341,7 @@ class AppointmentDialog(QDialog):
         self.time_edit = QTimeEdit()
         self.time_edit.setTime(QTime(9, 0))  # Начало рабочего дня
         self.time_edit.setDisplayFormat("HH:mm")
+        self.time_edit.timeChanged.connect(self.validate_time)
         form_layout.addRow("Время:", self.time_edit)
 
         # Статус
@@ -335,9 +364,175 @@ class AppointmentDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
+    def validate_time(self, time):
+        """Валидирует введённое время"""
+        if isinstance(time, str):
+            time = QTime.fromString(time, 'HH:mm')
+
+        if not self.calendar_utils.is_within_working_hours(time):
+            palette = self.time_edit.palette()
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.red)
+            self.time_edit.setPalette(palette)
+            self.time_edit.setToolTip("Рабочее время с 9:00 до 18:00")
+        else:
+            self.time_edit.setPalette(QPalette())
+            self.time_edit.setToolTip("")
+
+    def update_service_price(self):
+        """Обновляет отображение цены при изменении выбранной услуги."""
+        service_id = self.service_combo.currentData()
+        if service_id:
+            try:
+                service = self.db_pg.get_service_by_id(service_id)
+                if service:
+                    price = service[3]  # Предполагаем, что цена находится в 4-м поле (индекс 3)
+                    self.price_label.setText(f"{price:.2f} ₽")
+                else:
+                    self.price_label.setText("0.00 ₽")
+            except Exception as e:
+                logging.error(f"Ошибка при получении цены услуги: {str(e)}")
+                self.price_label.setText("0.00 ₽")
+        else:
+            self.price_label.setText("0.00 ₽")
+
+    def show_add_animal_dialog(self):
+        """Отображает диалог добавления нового животного."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Добавить животное")
+        dialog.setMinimumSize(400, 300)
+
+        layout = QFormLayout()
+
+        # Поля для ввода данных
+        self.name_edit = QLineEdit()
+        self.species_edit = QLineEdit()
+        self.breed_edit = QLineEdit()
+        self.owner_edit = QLineEdit()
+        self.phone_edit = QLineEdit()
+
+        layout.addRow("Имя:", self.name_edit)
+        layout.addRow("Вид:", self.species_edit)
+        layout.addRow("Порода:", self.breed_edit)
+        layout.addRow("Хозяин:", self.owner_edit)
+        layout.addRow("Телефон:", self.phone_edit)
+
+        # Кнопки
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton("Сохранить")
+        save_btn.clicked.connect(lambda: self.save_new_animal(dialog))
+        cancel_btn = QPushButton("Отмена")
+        cancel_btn.clicked.connect(dialog.reject)
+
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addRow(btn_layout)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def save_new_animal(self, dialog):
+        """Сохраняет новое животное в базу данных."""
+        name = self.name_edit.text().strip()
+        species = self.species_edit.text().strip()
+        breed = self.breed_edit.text().strip()
+        owner = self.owner_edit.text().strip()
+        phone = self.phone_edit.text().strip()
+
+        if not name or not owner:
+            QMessageBox.warning(self, "Ошибка", "Имя животного и хозяина обязательны")
+            return
+
+        animal_data = {
+            'name': name,
+            'species': species,
+            'breed': breed,
+            'owner_name': owner,
+            'owner_phone': phone,
+            'medical_history': []
+        }
+
+        try:
+            animal_id = self.db_mongo.create_animal(animal_data)
+            if animal_id:
+                # Добавляем новое животное в комбобокс
+                self.animal_combo.addItem(
+                    f"{name} ({owner})",
+                    animal_id
+                )
+                # Выбираем только что добавленное животное
+                self.animal_combo.setCurrentIndex(self.animal_combo.count() - 1)
+                dialog.accept()
+                QMessageBox.information(self, "Успех", "Животное успешно добавлено")
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось добавить животное")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Не удалось добавить животное: {str(e)}"
+            )
+
+    def set_default_values(self):
+        """Устанавливает значения по умолчанию для нового приема"""
+        # Используем метод из calendar_utils
+        self.time_edit.setTime(self.calendar_utils.get_next_available_time())
+
+        # Устанавливаем пустые значения
+        self.animal_combo.setCurrentIndex(0)  # "Выберите животное"
+        self.service_combo.setCurrentIndex(0)  # "Выберите услугу"
+
+        # Устанавливаем текущего пользователя как ветеринара, если он врач
+        if self.user_data['role'] == 'vet':
+            vet_index = self.vet_combo.findData(self.user_data['id'])
+            if vet_index >= 0:
+                self.vet_combo.setCurrentIndex(vet_index)
+        else:
+            self.vet_combo.setCurrentIndex(0)  # "Выберите врача"
+
+        # Устанавливаем текущую дату и ближайшее доступное время
+        self.date_edit.setDate(QDate.currentDate())
+
+        # Устанавливаем ближайшее рабочее время
+        now = datetime.now()
+        current_time = QTime(now.hour, now.minute)
+
+        if not self.calendar_utils.is_within_working_hours(current_time):
+            # Если сейчас нерабочее время, устанавливаем начало следующего рабочего дня
+            self.time_edit.setTime(QTime(9, 0))
+        else:
+            # Иначе ближайшие 30 минут
+            self.time_edit.setTime(self.calendar_utils.get_next_available_time())
+
+        # Устанавливаем статус "запланирован"
+        self.status_combo.setCurrentText("запланирован")
+
+    def update_available_times(self):
+        """Обновляет доступное время при изменении даты или врача"""
+        vet_id = self.vet_combo.currentData()
+        date = self.date_edit.date()
+
+        if vet_id and date.isValid():
+            available_slots = self.calendar_utils.get_available_slots(
+                vet_id,
+                date,
+                self.db_pg
+            )
+
     def load_data(self):
         """Загружает данные для выпадающих списков."""
         try:
+            # Очищаем списки перед загрузкой
+            self.animal_combo.clear()
+            self.vet_combo.clear()
+            self.service_combo.clear()
+
+            # Добавляем пустой элемент в начало списка животных
+            self.animal_combo.addItem("Выберите животное или добавьте новое", None)
+
+            # Для врачей и услуг оставляем обязательный выбор
+            self.vet_combo.addItem("Выберите врача", None)
+            self.service_combo.addItem("Выберите услугу", None)
+
             # Загрузка животных
             animals = self.db_mongo.get_all_animals()
             for animal in animals:
@@ -354,7 +549,10 @@ class AppointmentDialog(QDialog):
             # Загрузка услуг
             services = self.db_pg.get_all_services()
             for srv in services:
-                self.service_combo.addItem(srv[1], srv[0])
+                self.service_combo.addItem(
+                    f"{srv[1]}",  # Название
+                    srv[0]  # ID услуги
+                )
 
         except Exception as e:
             QMessageBox.critical(
@@ -365,6 +563,9 @@ class AppointmentDialog(QDialog):
 
     def load_appointment_data(self):
         """Загружает данные выбранного приёма для редактирования."""
+        if not self.appointment_id:
+            return  # Если нет ID приема, ничего не загружаем
+
         try:
             appointment = self.db_pg.get_appointment_by_id(self.appointment_id)
             if not appointment:
@@ -388,6 +589,8 @@ class AppointmentDialog(QDialog):
             service_index = self.service_combo.findData(service_id)
             if service_index >= 0:
                 self.service_combo.setCurrentIndex(service_index)
+                # Обновляем цену
+                self.update_service_price()
 
             # Устанавливаем дату и время
             self.date_edit.setDate(date)
@@ -398,13 +601,13 @@ class AppointmentDialog(QDialog):
             if status_index >= 0:
                 self.status_combo.setCurrentIndex(status_index)
 
-
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Ошибка",
                 f"Не удалось загрузить данные приёма: {str(e)}"
             )
+            self.reject()
 
     def save_appointment(self):
         """Сохраняет приём в базу данных."""
@@ -413,33 +616,34 @@ class AppointmentDialog(QDialog):
             animal_id = self.animal_combo.currentData()
             vet_id = self.vet_combo.currentData()
             service_id = self.service_combo.currentData()
-            date = self.date_edit.date().toString("yyyy-MM-dd")
-            time = self.time_edit.time().toString("HH:mm")
+            date = self.date_edit.date()  # QDate object
+            time = self.time_edit.time()  # QTime object
             status = self.status_combo.currentText()
 
-            # Проверка данных
-            if None in (animal_id, vet_id, service_id):
-                # Уточняем, какое именно поле не заполнено
-                missing = []
-                if animal_id is None: missing.append("Животное")
-                if vet_id is None: missing.append("Врач")
-                if service_id is None: missing.append("Услуга")
+            # Проверка обязательных полей
+            missing_fields = []
+            if not animal_id: missing_fields.append("Животное")
+            if not vet_id: missing_fields.append("Врач")
+            if not service_id: missing_fields.append("Услуга")
 
-                QMessageBox.warning(self, "Ошибка", f"Не заполнены обязательные поля: {', '.join(missing)}")
+            if missing_fields:
+                QMessageBox.warning(self, "Ошибка", f"Не заполнены поля: {', '.join(missing_fields)}")
                 return
 
-            # Проверка доступности времени у врача
-            if self.is_edit_mode:
-                busy = self.db_pg.check_vet_availability(vet_id, date, time, self.appointment_id)
-            else:
-                busy = self.db_pg.check_vet_availability(vet_id, date, time)
+            # Проверка рабочего времени
+            if not self.calendar_utils.is_within_working_hours(time):
+                QMessageBox.warning(self, "Ошибка", "Запись возможна только с 9:00 до 18:00")
+                return
 
-            if busy:
-                QMessageBox.warning(
-                    self,
-                    "Ошибка",
-                    "Врач уже занят в это время. Выберите другое время."
-                )
+            # Проверка доступности врача
+            if not self.calendar_utils.validate_appointment_time(
+                    vet_id,
+                    date,
+                    time,
+                    self.db_pg,
+                    self.appointment_id if self.is_edit_mode else None
+            ):
+                QMessageBox.warning(self, "Ошибка", "Врач уже занят в это время")
                 return
 
             # Сохранение в базу данных
@@ -448,20 +652,20 @@ class AppointmentDialog(QDialog):
                     self.appointment_id,
                     animal_id,
                     vet_id,
-                    date,
-                    time,
+                    date.toString('yyyy-MM-dd'),
+                    time.toString('HH:mm'),
                     service_id,
-                    status,
+                    status
                 )
                 action = "обновлён"
             else:
                 appointment_id = self.db_pg.insert_appointment(
                     animal_id,
                     vet_id,
-                    date,
-                    time,
+                    date.toString('yyyy-MM-dd'),
+                    time.toString('HH:mm'),
                     service_id,
-                    status,
+                    status
                 )
                 success = appointment_id is not None
                 action = "добавлен"
@@ -470,14 +674,11 @@ class AppointmentDialog(QDialog):
                 QMessageBox.information(self, "Успех", f"Приём успешно {action}")
                 self.accept()
             else:
-                QMessageBox.warning(self, "Ошибка", f"Не удалось сохранить приём")
+                QMessageBox.warning(self, "Ошибка", "Не удалось сохранить приём")
 
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Ошибка",
-                f"Не удалось сохранить приём: {str(e)}"
-            )
+            QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить приём: {str(e)}")
+            logging.error(f"Ошибка сохранения приёма: {str(e)}")
 
 
 class StatusDelegate(QStyledItemDelegate):
@@ -497,4 +698,3 @@ class StatusDelegate(QStyledItemDelegate):
         elif status == "отменен":
             option.backgroundBrush = Qt.GlobalColor.red
 
-# TODO: Реализовать виджет для управления приёмами (PyQt5)
