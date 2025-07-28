@@ -1,3 +1,4 @@
+import logging
 import os
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
@@ -133,8 +134,16 @@ class AnimalsWidget(QWidget):
 
     def load_all_animals(self):
         """Загружает всех животных из базы данных и отображает их в таблице."""
-        animals = self.mongo_db.get_all_animals()
-        self.display_animals(animals)
+        try:
+            animals = self.mongo_db.get_all_animals()
+            self.display_animals(animals)
+        except Exception as e:
+            logging.error(f"Ошибка при загрузке животных: {str(e)}")
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Не удалось загрузить данные о животных: {str(e)}"
+            )
 
     def display_animals(self, animals):
         """Отображает список животных в таблице.
