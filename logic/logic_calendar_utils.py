@@ -1,3 +1,4 @@
+#  logic_calendar_utils.py
 from PyQt6.QtCore import QDate, QTime
 import logging
 from datetime import datetime
@@ -81,3 +82,36 @@ class CalendarUtils:
             time = QTime.fromString(time, 'HH:mm')
         return (CalendarUtils.WORKING_HOURS['start'] <= time <=
                 CalendarUtils.WORKING_HOURS['end'])
+
+    @staticmethod
+    def is_past_time(date, time):
+        """Проверяет, является ли время в прошлом относительно текущего момента"""
+        current_datetime = datetime.now()
+        try:
+            if isinstance(date, QDate):
+                selected_datetime = datetime(
+                    date.year(), date.month(), date.day(),
+                    time.hour(), time.minute()
+                )
+            else:
+                # Если date уже datetime или строка
+                selected_datetime = date if isinstance(date, datetime) else datetime.strptime(date, '%Y-%m-%d')
+                selected_datetime = selected_datetime.replace(hour=time.hour(), minute=time.minute())
+
+            return selected_datetime < current_datetime
+        except Exception as e:
+            logging.error(f"Ошибка в is_past_time: {str(e)}")
+            return True  # В случае ошибки считаем время прошедшим
+
+    @staticmethod
+    def validate_appointment_datetime(date, time, is_admin=False):
+        """Проверяет корректность даты и времени приёма"""
+        # Проверка рабочего времени (9:00-18:00)
+        if not CalendarUtils.is_within_working_hours(time):
+            return False, "Запись возможна только с 9:00 до 18:00"
+
+        # Проверка на прошедшее время (если не админ)
+        if not is_admin and CalendarUtils.is_past_time(date, time):
+            return False, "Нельзя записать на прошедшее время"
+
+        return True, ""

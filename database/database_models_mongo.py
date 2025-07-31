@@ -1,4 +1,4 @@
-# Операции с MongoDB (животные)
+# database_models_mongo.py
 from database.database_mongodb_connector import MongoDBConnector
 from bson.objectid import ObjectId
 from datetime import datetime

@@ -1,4 +1,4 @@
-# Приёмы
+# ui_appointments_widget.py
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
@@ -19,7 +19,7 @@ class AppointmentsWidget(QWidget):
     # Сигнал об обновлении данных
     data_updated = pyqtSignal()
 
-    def __init__(self, user_data):
+    def __init__(self, user_data, main_window=None):
         """
         Инициализация виджета приёмов.
 
@@ -28,12 +28,14 @@ class AppointmentsWidget(QWidget):
         """
         super().__init__()
         self.user_data = user_data
+        self.main_window = main_window
         self.db_pg = PostgresModels()
         self.db_mongo = MongoDBModels()
         self.selected_date = QDate.currentDate()
         self.init_ui()
         self.load_appointments()
         self.calendar_utils = CalendarUtils()
+        self.services_widget = None  # Для хранения ссылки
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса."""
@@ -120,6 +122,10 @@ class AppointmentsWidget(QWidget):
         main_layout.addWidget(self.appointments_table)
 
         self.setLayout(main_layout)
+
+
+        if self.main_window:
+            self.main_window.services_widget.data_updated.connect(self.load_appointments)
 
     def date_changed(self, date):
         """Обработчик изменения даты."""
@@ -335,6 +341,7 @@ class AppointmentDialog(QDialog):
         self.date_edit = QDateEdit()
         self.date_edit.setDate(QDate.currentDate())
         self.date_edit.setCalendarPopup(True)
+
         form_layout.addRow("Дата:", self.date_edit)
 
         # Время
@@ -343,6 +350,11 @@ class AppointmentDialog(QDialog):
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.timeChanged.connect(self.validate_time)
         form_layout.addRow("Время:", self.time_edit)
+
+        # обработчики событий
+        self.date_edit.dateChanged.connect(self.validate_date_time)
+        self.time_edit.timeChanged.connect(self.validate_date_time)
+        self.time_edit.timeChanged.connect(self.validate_time)
 
         # Статус
         self.status_combo = QComboBox()
@@ -364,19 +376,42 @@ class AppointmentDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def validate_time(self, time):
-        """Валидирует введённое время"""
-        if isinstance(time, str):
-            time = QTime.fromString(time, 'HH:mm')
+    def validate_date_time(self):
+        """Валидирует комбинацию даты и времени"""
+        date = self.date_edit.date()
+        time = self.time_edit.time()
+        is_admin = self.user_data.get('role') == 'admin'
 
+        if not is_admin and date == QDate.currentDate():
+            self.validate_time()
+
+    def validate_time(self):
+        """Валидирует введённое время"""
+        time = self.time_edit.time()  # Получаем время из виджета
+        date = self.date_edit.date()
+        is_admin = self.user_data.get('role') == 'admin'
+
+        # Проверка рабочего времени
         if not self.calendar_utils.is_within_working_hours(time):
-            palette = self.time_edit.palette()
-            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.red)
-            self.time_edit.setPalette(palette)
-            self.time_edit.setToolTip("Рабочее время с 9:00 до 18:00")
-        else:
-            self.time_edit.setPalette(QPalette())
-            self.time_edit.setToolTip("")
+            self.show_time_error("Рабочее время с 9:00 до 18:00")
+            return
+
+        # Проверка на прошедшее время (если не админ)
+        if not is_admin and self.calendar_utils.is_past_time(date, time):
+            self.show_time_error("Нельзя записать на прошедшее время")
+            return
+
+        # Сброс ошибок, если все проверки пройдены
+        self.time_edit.setPalette(QPalette())
+        self.time_edit.setToolTip("")
+
+    def show_time_error(self, message):
+        """Показывает ошибку в поле времени"""
+        palette = self.time_edit.palette()
+        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.red)
+        self.time_edit.setPalette(palette)
+        self.time_edit.setToolTip(message)
+
 
     def update_service_price(self):
         """Обновляет отображение цены при изменении выбранной услуги."""
@@ -619,6 +654,7 @@ class AppointmentDialog(QDialog):
             date = self.date_edit.date()  # QDate object
             time = self.time_edit.time()  # QTime object
             status = self.status_combo.currentText()
+            is_admin = self.user_data.get('role') == 'admin'
 
             # Проверка обязательных полей
             missing_fields = []
@@ -630,12 +666,17 @@ class AppointmentDialog(QDialog):
                 QMessageBox.warning(self, "Ошибка", f"Не заполнены поля: {', '.join(missing_fields)}")
                 return
 
-            # Проверка рабочего времени
+            # Проверка рабочего времени (для всех пользователей)
             if not self.calendar_utils.is_within_working_hours(time):
                 QMessageBox.warning(self, "Ошибка", "Запись возможна только с 9:00 до 18:00")
                 return
 
-            # Проверка доступности врача
+            # Для НЕ админов - проверка на прошедшее время
+            if not is_admin and self.calendar_utils.is_past_time(date, time):
+                QMessageBox.warning(self, "Ошибка", "Нельзя записать на прошедшее время")
+                return
+
+            # Проверка доступности врача (для всех пользователей)
             if not self.calendar_utils.validate_appointment_time(
                     vet_id,
                     date,
@@ -697,4 +738,3 @@ class StatusDelegate(QStyledItemDelegate):
             option.backgroundBrush = Qt.GlobalColor.green
         elif status == "отменен":
             option.backgroundBrush = Qt.GlobalColor.red
-
