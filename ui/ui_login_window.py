@@ -1,4 +1,4 @@
-# Окно входа
+# ui_login_window.py
 """
 Модуль окна авторизации.
 Обеспечивает интерфейс для входа пользователей в систему.
@@ -163,5 +163,3 @@ class LoginWindow(QWidget):
         """Очистка полей ввода"""
         self.login_input.clear()
         self.password_input.clear()
-
-# TODO: Реализовать окно входа (PyQt6)

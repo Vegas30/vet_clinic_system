@@ -1,4 +1,4 @@
-# Точка входа в приложение ветклиники
+# main
 import sys
 
 from PyQt6.QtWidgets import QApplication, QDialog
@@ -7,6 +7,7 @@ from datetime import datetime
 
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
+
 
 logging.basicConfig(
     filename=f'app_errors_{datetime.now().strftime("%Y-%m-%d")}.log',

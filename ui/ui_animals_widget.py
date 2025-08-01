@@ -1,3 +1,4 @@
+# ui_animals_widget.py
 import logging
 import os
 from PyQt6.QtWidgets import (
@@ -35,102 +36,112 @@ class AnimalsWidget(QWidget):
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса."""
-        self.setWindowTitle("Учет животных")
-        self.setMinimumSize(1200, 800)  # Увеличим минимальный размер окна
+        self.setWindowTitle("Учет животных") # Устанавливает заголовок окна приложения
+        self.setMinimumSize(1200, 800)  # Задает минимальный размер окна в пикселях
 
         # Основной макет
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        main_layout = QVBoxLayout() # Создает вертикальный макет для основного содержимого окна
+        main_layout.setContentsMargins(10, 10, 10, 10) # Устанавливает отступы вокруг основного
+        # макета в пикселях со всех сторон
+        main_layout.setSpacing(10) # Задает расстояние между элементами в основном макете в пикселях
 
         # Верхняя панель с поиском и кнопками
-        top_panel = QWidget()
-        top_layout = QHBoxLayout(top_panel)
-        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_panel = QWidget() # Создает виджет для верхней панели
+        top_layout = QHBoxLayout(top_panel) # Создает горизонтальный макет для верхней панели
+        top_layout.setContentsMargins(0, 0, 0, 0) # Убирает отступы вокруг макета верхней панели
 
         # Левая часть панели - поиск
-        search_group = QGroupBox("Поиск животного")
-        search_layout = QHBoxLayout(search_group)
+        search_group = QGroupBox("Поиск животного") # Создает группу с заголовком
+        search_layout = QHBoxLayout(search_group) # Создает горизонтальный макет внутри группы
 
         # Выбор фильтра поиска
-        self.filter_combo = QComboBox()
-        self.filter_combo.addItems(["ID", "Имя", "Хозяин", "Телефон"])
+        self.filter_combo = QComboBox() # Создает выпадающий список для выбора фильтра
+        self.filter_combo.addItems(["ID", "Имя", "Хозяин", "Телефон"]) # Добавляет варианты фильтров в выпадающий список
 
         # Поле поиска
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Введите значение для поиска...")
-        self.search_input.setClearButtonEnabled(True)
+        self.search_input = QLineEdit() # Создает поле ввода для поиска
+        self.search_input.setPlaceholderText("Введите значение для поиска...") # Устанавливает подсказку в поле ввода
+        self.search_input.setClearButtonEnabled(True) # Включает кнопку очистки в поле ввода
 
         # Кнопка поиска
-        search_btn = QPushButton("Поиск")
-        search_btn.setIcon(QIcon("assets/icons/search.png"))
-        search_btn.clicked.connect(self.search_animals)
+        search_btn = QPushButton("Поиск") # Создает кнопку "Поиск"
+        search_btn.setIcon(QIcon("assets/icons/search.png")) # Устанавливает иконку для кнопки поиска
+        search_btn.clicked.connect(self.search_animals) # Подключает метод search_animals к нажатию кнопки
 
         # Кнопка сброса
-        clear_btn = QPushButton("Сбросить")
-        clear_btn.setIcon(QIcon("assets/icons/clear.png"))
-        clear_btn.clicked.connect(self.clear_search)
+        clear_btn = QPushButton("Сбросить") # Создает кнопку "Сбросить"
+        clear_btn.setIcon(QIcon("assets/icons/clear.png")) # Устанавливает иконку для кнопки сброса
+        clear_btn.clicked.connect(self.clear_search) # Подключает метод clear_search к нажатию кнопки
 
         # Добавляем элементы в группу поиска
-        search_layout.addWidget(self.filter_combo)
-        search_layout.addWidget(self.search_input)
-        search_layout.addWidget(search_btn)
-        search_layout.addWidget(clear_btn)
+        search_layout.addWidget(self.filter_combo) # Добавляет выпадающий список в макет поиска
+        search_layout.addWidget(self.search_input) # Добавляет поле ввода в макет поиска
+        search_layout.addWidget(search_btn) # Добавляет кнопку поиска в макет поиска
+        search_layout.addWidget(clear_btn) # Добавляет кнопку сброса в макет поиска
 
         # Правая часть панели - кнопки управления
-        buttons_group = QGroupBox("Действия")
-        buttons_layout = QHBoxLayout(buttons_group)
+        buttons_group = QGroupBox("Действия") # Создает группу с заголовком "Действия"
+        buttons_layout = QHBoxLayout(buttons_group) # Создает горизонтальный макет внутри группы действий
 
         # Кнопка добавления нового животного
-        self.add_btn = QPushButton("Добавить")
-        self.add_btn.setIcon(QIcon("assets/icons/add.png"))
-        self.add_btn.clicked.connect(self.show_add_animal_dialog)
-        self.add_btn.setToolTip("Добавить новое животное")
+        self.add_btn = QPushButton("Добавить") #  Создает кнопку "Добавить"
+        self.add_btn.setIcon(QIcon("assets/icons/add.png")) # Устанавливает иконку для кнопки добавления
+        self.add_btn.clicked.connect(self.show_add_animal_dialog) # Подключает метод show_add_animal_dialog
+        # к нажатию кнопки
+        self.add_btn.setToolTip("Добавить новое животное") # Устанавливает всплывающую подсказку для кнопки
 
         # Кнопки управления
-        self.edit_btn = QPushButton("Редактировать")
-        self.edit_btn.setIcon(QIcon("assets/icons/edit.png"))
-        self.edit_btn.clicked.connect(self.edit_current_animal)
-        self.edit_btn.setToolTip("Редактировать выбранное животное")
+        self.edit_btn = QPushButton("Редактировать") # Создает кнопку "Редактировать"
+        self.edit_btn.setIcon(QIcon("assets/icons/edit.png")) # Устанавливает иконку для кнопки редактирования
+        self.edit_btn.clicked.connect(self.edit_current_animal) # Подключает метод edit_current_animal к нажатию кнопки
+        self.edit_btn.setToolTip("Редактировать выбранное животное") # Устанавливает всплывающую подсказку
 
-        self.delete_btn = QPushButton("Удалить")
-        self.delete_btn.setIcon(QIcon("assets/icons/delete.png"))
-        self.delete_btn.clicked.connect(self.delete_current_animal)
-        self.delete_btn.setToolTip("Удалить выбранное животное")
+        self.delete_btn = QPushButton("Удалить") #  Создает кнопку "Удалить"
+        self.delete_btn.setIcon(QIcon("assets/icons/delete.png")) # Устанавливает иконку для кнопки удаления
+        self.delete_btn.clicked.connect(self.delete_current_animal) # Подключает метод delete_current_animal
+        # к нажатию кнопки
+        self.delete_btn.setToolTip("Удалить выбранное животное") # Устанавливает всплывающую подсказку
 
-        self.details_btn = QPushButton("Подробнее")
-        self.details_btn.setIcon(QIcon("assets/icons/details.png"))
-        self.details_btn.clicked.connect(self.show_current_animal_details)
-        self.details_btn.setToolTip("Просмотр подробной информации")
+        self.details_btn = QPushButton("Подробнее") # Создает кнопку "Подробнее"
+        self.details_btn.setIcon(QIcon("assets/icons/details.png")) # Устанавливает иконку для кнопки подробностей
+        self.details_btn.clicked.connect(self.show_current_animal_details) # Подключает метод show_current_animal_details
+        # к нажатию кнопки
+        self.details_btn.setToolTip("Просмотр подробной информации") # Устанавливает всплывающую подсказку
 
         # Добавляем кнопки в правую часть
-        buttons_layout.addWidget(self.add_btn)
-        buttons_layout.addWidget(self.edit_btn)
-        buttons_layout.addWidget(self.delete_btn)
-        buttons_layout.addWidget(self.details_btn)
+        buttons_layout.addWidget(self.add_btn) # Добавляет кнопку добавления в макет действий
+        buttons_layout.addWidget(self.edit_btn) # Добавляет кнопку редактирования в макет действий
+        buttons_layout.addWidget(self.delete_btn) # Добавляет кнопку удаления в макет действий
+        buttons_layout.addWidget(self.details_btn) # Добавляет кнопку подробностей в макет действий
 
         # Добавляем группы на верхнюю панель
-        top_layout.addWidget(search_group)
-        top_layout.addWidget(buttons_group)
+        top_layout.addWidget(search_group) # Добавляет группу поиска в верхнюю панель
+        top_layout.addWidget(buttons_group) # Добавляет группу действий в верхнюю панель
 
         # Таблица животных
-        self.animals_table = QTableWidget()
-        self.animals_table.setColumnCount(6)  # 6 колонок
-        self.animals_table.setHorizontalHeaderLabels(["ID", "Имя", "Вид", "Порода", "Хозяин", "Телефон"])
+        self.animals_table = QTableWidget() # Создает таблицу для отображения животных
+        self.animals_table.setColumnCount(6)  # Устанавливает количество колонок в таблице - 6 колонок
+        self.animals_table.setHorizontalHeaderLabels(["ID", "Имя", "Вид", "Порода", "Хозяин", "Телефон"]) #  Устанавливает
+        # заголовки колонок таблицы
 
         # Настройка отображения таблицы
         self.animals_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch)  # Равномерное растяжение
-        self.animals_table.verticalHeader().setVisible(False)
-        self.animals_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.animals_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-        self.animals_table.cellDoubleClicked.connect(self.show_animal_details)
+        self.animals_table.verticalHeader().setVisible(False) # Скрывает вертикальные заголовки (номера строк) в таблице
+        self.animals_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows) #выделяется вся строка, а не
+        # только одна ячейка.
+        self.animals_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection) # Разрешает выделять только одну
+        # строку за раз (запрещает множественный выбор)
+        self.animals_table.cellDoubleClicked.connect(self.show_animal_details) # Привязывает двойной клик по ячейке
+        # таблицы к методу self.show_animal_details
 
         # Сборка основного интерфейса
-        main_layout.addWidget(top_panel)
-        main_layout.addWidget(self.animals_table)
+        main_layout.addWidget(top_panel) # Добавляет верхнюю панель (с поиском и кнопками) в основной вертикальный макет
+        main_layout.addWidget(self.animals_table) # Добавляет таблицу животных в основной вертикальный
+        # макет (под верхней панелью)
 
-        self.setLayout(main_layout)
+        self.setLayout(main_layout) #  Устанавливает основной вертикальный макет (содержащий верхнюю панель и таблицу)
+        # как главный макет для текущего виджета/окна
 
     def load_all_animals(self):
         """Загружает всех животных из базы данных и отображает их в таблице."""

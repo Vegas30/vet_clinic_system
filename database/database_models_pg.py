@@ -1,4 +1,4 @@
-# Классы и SQL-запросы к PostgreSQL
+# database_models_pg.py
 import datetime
 
 from PyQt6.QtCore import QDate
@@ -175,6 +175,7 @@ class PostgresModels:
             self.db.disconnect()
 
     def insert_service(self, title, description, price):
+        """Добавление новой услуги"""
         sql = "INSERT INTO Услуги (title, description, price) VALUES (%s, %s, %s) RETURNING id;"
         try:
             conn = self.db.connect()
@@ -191,6 +192,7 @@ class PostgresModels:
             self.db.disconnect()
 
     def get_service_by_id(self, service_id):
+
         sql = "SELECT id, title, description, price FROM Услуги WHERE id = %s;"
         try:
             conn = self.db.connect()
@@ -204,6 +206,7 @@ class PostgresModels:
             self.db.disconnect()
 
     def update_service(self, service_id, title, description, price):
+        """Обновление услуги"""
         sql = "UPDATE Услуги SET title = %s, description = %s, price = %s WHERE id = %s;"
         try:
             conn = self.db.connect()
@@ -234,6 +237,7 @@ class PostgresModels:
             self.db.disconnect()
 
     def get_all_services(self):
+        """Получение всех услуг"""
         sql = "SELECT id, title, description, price FROM Услуги;"
         try:
             conn = self.db.connect()
@@ -475,3 +479,4 @@ class PostgresModels:
         finally:
             if conn:
                 self.db.disconnect()
+
