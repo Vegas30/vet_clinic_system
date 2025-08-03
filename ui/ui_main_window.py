@@ -1,3 +1,4 @@
+# ui_main_window.py
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
 from ui.ui_animals_widget import AnimalsWidget
@@ -5,6 +6,7 @@ from ui.ui_appointments_widget import AppointmentsWidget
 from ui.ui_branch_widget import BranchWidget
 # from ui.ui_staff_widget import StaffWidget
 # from ui.ui_reports_widget import ReportsWidget
+from ui.ui_services_widget import ServicesWidget
 
 class MainWindow(QMainWindow):
     def __init__(self, user_data):
@@ -54,7 +56,13 @@ class MainWindow(QMainWindow):
         self.reports_widget = QWidget()
         self.tab_widget.addTab(self.reports_widget, "Отчёты")
 
+        # Вкладка Услуги
+        self.services_widget = ServicesWidget(self.user_data)
+        self.tab_widget.addTab(self.services_widget, "Услуги")
+        self.services_widget.data_updated.connect(self.handle_data_update)
+
     def handle_data_update(self):
         """Обновляет данные во всех виджетах при изменении"""
         self.animals_widget.load_all_animals()  # Перезагружаем список животных
         self.appointments_widget.load_appointments()  # Перезагружаем список приёмы
+        self.services_widget.load_services() # Перезагружаем список услуги
