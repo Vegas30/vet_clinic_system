@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabe
 from PyQt6.QtCore import Qt
 from ui.ui_animals_widget import AnimalsWidget
 from ui.ui_appointments_widget import AppointmentsWidget
+from ui.ui_branch_widget import BranchWidget
 # from ui.ui_staff_widget import StaffWidget
 # from ui.ui_reports_widget import ReportsWidget
 from ui.ui_services_widget import ServicesWidget
@@ -35,6 +36,12 @@ class MainWindow(QMainWindow):
         # self.tab_widget.addTab(self.staff_widget, "Сотрудники")
         self.staff_widget = QWidget()
         self.tab_widget.addTab(self.staff_widget, "Сотрудники")
+
+        # Вкладка Филиалы
+        self.branch_widget = BranchWidget()
+        self.tab_widget.addTab(self.branch_widget, "Филиалы")
+        # self.branch_widget = QWidget()
+        # self.tab_widget.addTab(self.branch_widget, "Филиалы")
 
         # if self.user_data['role'] == 'admin':
         #     self.staff_widget = StaffWidget(self.user_data)
