@@ -1,4 +1,4 @@
-# database_models_pg.py
+# Классы и SQL-запросы к PostgreSQL
 import datetime
 
 from PyQt6.QtCore import QDate
@@ -88,7 +88,7 @@ class PostgresModels:
         name = branch_data.get("name")
         address = branch_data.get("address")
         phone = branch_data.get("phone")
-        
+
         sql = "INSERT INTO Филиалы (name, address, phone) VALUES (%s, %s, %s) RETURNING id;"
         try:
             conn = self.db.connect()
@@ -105,7 +105,13 @@ class PostgresModels:
             self.db.disconnect()
 
     def get_all_branches(self):
-        sql = "SELECT id, name, address, phone FROM Филиалы;"
+        """
+        Получает все филиалы из базы данных.
+
+        Returns:
+            list: Список кортежей с данными филиалов (id, name, address, phone)
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы ORDER BY id;"
         try:
             conn = self.db.connect()
             cur = self.db.get_cursor()
@@ -116,6 +122,7 @@ class PostgresModels:
             print(f"Ошибка при получении всех филиалов: {e}")
         finally:
             self.db.disconnect()
+        return []
 
     def delete_branch(self, branch_id):
         sql = "DELETE FROM Филиалы WHERE id = %s;"
@@ -191,6 +198,98 @@ class PostgresModels:
         finally:
             self.db.disconnect()
 
+    def search_branches_by_id(self, search_text):
+        """
+        Поиск филиалов по ID.
+
+        Args:
+            search_text (str): ID для поиска
+
+        Returns:
+            list: Список кортежей с данными филиалов
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы WHERE id = %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (search_text,))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при поиске филиалов по ID: {e}")
+        finally:
+            self.db.disconnect()
+        return []
+
+    def search_branches_by_name(self, search_text):
+        """
+        Поиск филиалов по названию.
+
+        Args:
+            search_text (str): Название для поиска
+
+        Returns:
+            list: Список кортежей с данными филиалов
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы WHERE name ILIKE %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (f'%{search_text}%',))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при поиске филиалов по названию: {e}")
+        finally:
+            self.db.disconnect()
+        return []
+
+    def search_branches_by_address(self, search_text):
+        """
+        Поиск филиалов по адресу.
+
+        Args:
+            search_text (str): Адрес для поиска
+
+        Returns:
+            list: Список кортежей с данными филиалов
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы WHERE address ILIKE %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (f'%{search_text}%',))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при поиске филиалов по адресу: {e}")
+        finally:
+            self.db.disconnect()
+        return []
+
+    def search_branches_by_phone(self, search_text):
+        """
+        Поиск филиалов по телефону.
+
+        Args:
+            search_text (str): Телефон для поиска
+
+        Returns:
+            list: Список кортежей с данными филиалов
+        """
+        sql = "SELECT id, name, address, phone FROM Филиалы WHERE phone ILIKE %s;"
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql, (f'%{search_text}%',))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при поиске филиалов по телефону: {e}")
+        finally:
+            self.db.disconnect()
+        return []
+
     def insert_employee(self, full_name, login, password_hash, role, branch_id):
         sql = "INSERT INTO Сотрудники (full_name, login, password_hash, role, branch_id) VALUES (%s, %s, %s, %s, %s) RETURNING id;"
         try:
@@ -264,7 +363,6 @@ class PostgresModels:
             self.db.disconnect()
 
     def insert_service(self, title, description, price):
-        """Добавление новой услуги"""
         sql = "INSERT INTO Услуги (title, description, price) VALUES (%s, %s, %s) RETURNING id;"
         try:
             conn = self.db.connect()
@@ -281,7 +379,6 @@ class PostgresModels:
             self.db.disconnect()
 
     def get_service_by_id(self, service_id):
-
         sql = "SELECT id, title, description, price FROM Услуги WHERE id = %s;"
         try:
             conn = self.db.connect()
@@ -295,7 +392,6 @@ class PostgresModels:
             self.db.disconnect()
 
     def update_service(self, service_id, title, description, price):
-        """Обновление услуги"""
         sql = "UPDATE Услуги SET title = %s, description = %s, price = %s WHERE id = %s;"
         try:
             conn = self.db.connect()
@@ -326,7 +422,6 @@ class PostgresModels:
             self.db.disconnect()
 
     def get_all_services(self):
-        """Получение всех услуг"""
         sql = "SELECT id, title, description, price FROM Услуги;"
         try:
             conn = self.db.connect()
@@ -568,4 +663,3 @@ class PostgresModels:
         finally:
             if conn:
                 self.db.disconnect()
-

@@ -28,7 +28,7 @@ class BranchWidget(QWidget):
         # self.attachments = []  # Список вложений для новой мед.записи
 
         self.init_ui()  # Инициализация интерфейса
-        self.get_all_branches()  # Загрузка всех филиалов при старте
+        self.load_branches_data()  # Загрузка всех филиалов при старте
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса."""
@@ -61,7 +61,7 @@ class BranchWidget(QWidget):
         # Кнопка поиска
         search_btn = QPushButton("Поиск")
         search_btn.setIcon(QIcon("assets/icons/search.png"))
-        search_btn.clicked.connect(self.search_branch)
+        search_btn.clicked.connect(self.search_branches)
 
         # Кнопка сброса
         clear_btn = QPushButton("Сбросить")
@@ -112,8 +112,9 @@ class BranchWidget(QWidget):
 
         # Таблица филиалов
         self.branches_table = QTableWidget()
-        self.branches_table.setColumnCount(6)  # 6 колонок
-        self.branches_table.setHorizontalHeaderLabels(["ID", "Имя", "Вид", "Порода", "Хозяин", "Телефон"])
+
+        self.branches_table.setColumnCount(4)  # 4 колонки
+        self.branches_table.setHorizontalHeaderLabels(["ID", "Название", "Адрес", "Телефон"])
 
         # Настройка отображения таблицы
         self.branches_table.horizontalHeader().setSectionResizeMode(
@@ -121,7 +122,7 @@ class BranchWidget(QWidget):
         self.branches_table.verticalHeader().setVisible(False)
         self.branches_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.branches_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-        self.branches_table.cellDoubleClicked.connect(self.show_branch_details)
+        self.branches_table.cellDoubleClicked.connect(self.show_current_branch_details)
 
         # Сборка основного интерфейса
         main_layout.addWidget(top_panel)
@@ -129,54 +130,61 @@ class BranchWidget(QWidget):
 
         self.setLayout(main_layout)
 
-    def get_all_branches(self):
+    def load_branches_data(self):
         """Загружает всех животных из базы данных и отображает их в таблице."""
         branches = self.pSQL_db.get_all_branches()
+
+        # Очищаем таблицу перед загрузкой новых данных
+        self.branches_table.setRowCount(0)
+        if not branches:
+            QMessageBox.information(self, "Информация", "Нет доступных филиалов")
+            return
+        # Заполняем таблицу данными филиалов
         self.display_branches(branches)
 
     def display_branches(self, branches):
         """Отображает список филиалов в таблице.
 
         Args:
-            branches (list): Список словарей с данными филиалов
+            branches (list): Список кортежей с данными филиалов (id, name, address, phone)
         """
         self.branches_table.setRowCount(len(branches))
         for row, branch in enumerate(branches):
-            self.branches_table.setItem(row, 0, QTableWidgetItem(branch['id']))
-            self.branches_table.setItem(row, 1, QTableWidgetItem(branch.get('name', '')))
-            self.branches_table.setItem(row, 2, QTableWidgetItem(branch.get('address', '')))
-            self.branches_table.setItem(row, 3, QTableWidgetItem(branch.get('phone', '')))
-
+            self.branches_table.insertRow(row)
+            # branch - это кортеж: (id, name, address, phone)
+            self.branches_table.setItem(row, 0, QTableWidgetItem(str(branch[0])))
+            self.branches_table.setItem(row, 1, QTableWidgetItem(branch[1] or ''))
+            self.branches_table.setItem(row, 2, QTableWidgetItem(branch[2] or ''))
+            self.branches_table.setItem(row, 3, QTableWidgetItem(branch[3] or ''))
 
     def search_branches(self):
-        """Выполняет поиск животных по выбранному фильтру."""
+        """Выполняет поиск филиалов по выбранному фильтру."""
         search_text = self.search_input.text().strip()
         if not search_text:
-            self.get_all_branches()
+            self.load_branches_data()
             return
 
         filter_type = self.filter_combo.currentText()
 
         # Определяем критерии поиска в зависимости от выбранного фильтра
         if filter_type == "ID":
-            criteria = {'_id': search_text}
-        elif filter_type == "Имя":
-            criteria = {'name': {'$regex': search_text, '$options': 'i'}}
-        elif filter_type == "Хозяин":
-            criteria = {'owner_name': {'$regex': search_text, '$options': 'i'}}
+            branches = self.pSQL_db.search_branches_by_id(search_text)
+        elif filter_type == "Название":
+            branches = self.pSQL_db.search_branches_by_name(search_text)
+        elif filter_type == "Адрес":
+            branches = self.pSQL_db.search_branches_by_address(search_text)
         else:  # По телефону
-            criteria = {'owner_phone': {'$regex': '^' + search_text}}
+            branches = self.pSQL_db.search_branches_by_phone(search_text)
 
-        branches = self.pSQL_db.search_branches(criteria)
         self.display_branches(branches)
 
     def clear_search(self):
-        """Сбрасывает поиск и загружает всех животных."""
+        """Сбрасывает поиск и загружает всех филиалов."""
         self.search_input.clear()
-        self.load_all_branches()
+        self.load_branches_data()
 
     def show_current_branch_details(self):
-        """Отображает детальную информацию о выбранном животном."""
+        """Отображает детальную информацию о выбранном филиале."""
         try:
             selected_items = self.branches_table.selectedItems()
 
@@ -193,362 +201,39 @@ class BranchWidget(QWidget):
 
             branch_id_item = self.branches_table.item(selected_row, 0)
             if not branch_id_item:
-                QMessageBox.warning(self, "Ошибка", "Не удалось получить ID животного")
+                QMessageBox.warning(self, "Ошибка", "Не удалось получить ID филиала")
                 return
 
             branch_id = branch_id_item.text()
             if not branch_id:
-                QMessageBox.warning(self, "Ошибка", "ID животного пуст")
+                QMessageBox.warning(self, "Ошибка", "ID филиала пуст")
                 return
 
-            self.show_branch_details(selected_row)
+            # Получаем данные филиала из базы данных
+            branch = self.pSQL_db.get_branch_by_id(int(branch_id))
+            if not branch:
+                QMessageBox.warning(self, "Ошибка", "Филиал не найден")
+                return
+
+            # Отображаем детальную информацию
+            details_text = f"""
+            ID: {branch[0]}
+            Название: {branch[1]}
+            Адрес: {branch[2]}
+            Телефон: {branch[3]}
+            """
+
+            QMessageBox.information(self, "Детали филиала", details_text)
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {str(e)}")
             print(f"Error in show_current_branch_details: {e}")
 
-    def show_branch_details(self, row):
-        """Открывает диалог с подробной информацией о животном."""
-        try:
-            branch_id_item = self.branches_table.item(row, 0)
-            if not branch_id_item:
-                QMessageBox.warning(self, "Ошибка", "Не удалось получить ID животного")
-                return
-
-            branch_id = branch_id_item.text()
-            branch = self.pSQL_db.get_branch_by_id(branch_id)
-
-            if not branch:
-                QMessageBox.warning(self, "Ошибка", "Филиал не найден в базе данных")
-                return
-
-            # Создаем диалог с проверкой
-            dialog = QDialog(self)
-            dialog.setWindowTitle(f"Карточка животного: {branch.get('name', 'Без имени')}")
-            dialog.setMinimumSize(800, 600)
-
-            # Добавляем защиту от ошибок при создании вкладок
-            try:
-                layout = QVBoxLayout()
-                tabs = QTabWidget()
-
-                # Вкладка "Общая информация"
-                general_tab = QWidget()
-                self.init_general_tab(general_tab, branch)
-                tabs.addTab(general_tab, "Общая информация")
-
-                # Вкладка "История болезни"
-                medical_tab = QWidget()
-                self.init_medical_tab(medical_tab, branch)
-                tabs.addTab(medical_tab, "История болезни")
-
-                layout.addWidget(tabs)
-                close_btn = QPushButton("Закрыть")
-                close_btn.clicked.connect(dialog.close)
-                layout.addWidget(close_btn)
-
-                dialog.setLayout(layout)
-                dialog.exec()
-
-            except Exception as e:
-                QMessageBox.critical(self, "Ошибка", f"Ошибка при создании диалога: {str(e)}")
-                print(f"Dialog creation error: {e}")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {str(e)}")
-            print(f"Error in show_branch_details: {e}")
-
-    def init_general_tab(self, tab, branch):
-        """Инициализирует вкладку с общей информацией о животном.
-
-        Args:
-            tab (QWidget): Виджет вкладки
-            branch (dict): Данные животного
-        """
-        layout = QFormLayout()
-
-        # Фото животного
-        photo_label = QLabel()
-        photo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        photo_label.setFixedSize(200, 200)
-        photo_label.setStyleSheet("border: 1px solid #ccc;")
-
-        photo_path = branch.get('photo_path', '')
-        if photo_path and os.path.exists(photo_path):
-            pixmap = QPixmap(photo_path)
-            photo_label.setPixmap(pixmap.scaled(
-                200, 200, Qt.AspectRatioMode.KeepAspectRatio))
-        else:
-            photo_label.setText("Фото отсутствует")
-
-        # Основная информация
-        info_layout = QVBoxLayout()
-        info_layout.addWidget(QLabel(f"<b>Имя:</b> {branch.get('name', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Вид:</b> {branch.get('species', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Порода:</b> {branch.get('breed', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Дата рождения:</b> {branch.get('birth_date', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Пол:</b> {branch.get('sex', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Хозяин:</b> {branch.get('owner_name', '')}"))
-        info_layout.addWidget(QLabel(f"<b>Телефон:</b> {branch.get('owner_phone', '')}"))
-
-        # Кнопка изменения фото
-        change_photo_btn = QPushButton("Изменить фото")
-        change_photo_btn.clicked.connect(lambda: self.change_branch_photo(branch['_id'], photo_label))
-
-        # Расположение элементов
-        photo_layout = QHBoxLayout()
-        photo_layout.addWidget(photo_label)
-        photo_layout.addLayout(info_layout)
-
-        layout.addRow(photo_layout)
-        layout.addRow(change_photo_btn)
-        tab.setLayout(layout)
-
-    def init_medical_tab(self, tab, branch):
-        """Инициализирует вкладку с историей болезни животного.
-
-        Args:
-            tab (QWidget): Виджет вкладки
-            branch (dict): Данные животного
-        """
-        layout = QVBoxLayout()
-
-        # Список медицинских записей
-        medical_list = QListWidget()
-
-        # Заполняем список записями
-        for record in branch.get('medical_history', []):
-            item = QListWidgetItem(f"{record.get('date', '')} - {record.get('diagnosis', '')}")
-            item.setData(Qt.ItemDataRole.UserRole, record)
-            medical_list.addItem(item)
-
-        # Контекстное меню для вложений
-        medical_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        medical_list.customContextMenuRequested.connect(
-            lambda pos: self.show_context_menu(pos, medical_list))
-
-        # Кнопки управления
-        btn_layout = QHBoxLayout()
-        add_record_btn = QPushButton("Добавить запись")
-        add_record_btn.clicked.connect(lambda: self.add_medical_record(branch['_id'], medical_list))
-        view_record_btn = QPushButton("Просмотреть")
-        view_record_btn.clicked.connect(lambda: self.show_medical_record(medical_list.currentItem()))
-
-        btn_layout.addWidget(add_record_btn)
-        btn_layout.addWidget(view_record_btn)
-
-        layout.addWidget(medical_list)
-        layout.addLayout(btn_layout)
-        tab.setLayout(layout)
-
-        attachments_list = QListWidget()
-        delegate = AttachmentDelegate(attachments_list)
-        attachments_list.setItemDelegate(delegate)
-        attachments_list.viewport().setAttribute(Qt.WidgetAttribute.WA_Hover)
-
-    def change_branch_photo(self, branch_id, photo_label):
-        """Обновляет фото животного.
-
-        Args:
-            branch_id (str): ID животного
-            photo_label (QLabel): Виджет для отображения фото
-        """
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(
-            self, "Выберите фото", "", "Images (*.png *.jpg *.jpeg)")
-
-        if file_path:
-            # Сохраняем фото в папку uploads
-            upload_dir = "assets/uploads"
-            os.makedirs(upload_dir, exist_ok=True)
-            new_filename = f"{branch_id}_{os.path.basename(file_path)}"
-            new_path = os.path.join(upload_dir, new_filename)
-
-            try:
-                # Копируем файл
-                import shutil
-                shutil.copy(file_path, new_path)
-
-                # Обновляем в базе данных
-                update_data = {'photo_path': new_path}
-                self.pSQL_db.update_branch(branch_id, update_data)
-
-                # Обновляем отображение
-                pixmap = QPixmap(new_path)
-                photo_label.setPixmap(pixmap.scaled(
-                    200, 200, Qt.AspectRatioMode.KeepAspectRatio))
-
-                QMessageBox.information(self, "Успешно", "Фото обновлено")
-            except Exception as e:
-                QMessageBox.warning(self, "Ошибка", f"Не удалось обновить фото: {str(e)}")
-
-    def show_medical_record(self, item):
-        """Отображает детали медицинской записи.
-
-        Args:
-            item (QListWidgetItem): Элемент списка с данными записи
-        """
-        if not item:
-            return
-
-        record = item.data(Qt.ItemDataRole.UserRole)
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Медицинская запись")
-        dialog.setMinimumSize(600, 500)
-
-        layout = QVBoxLayout()
-
-        # Основная информация
-        form_layout = QFormLayout()
-        form_layout.addRow("Дата:", QLabel(record.get('date', '')))
-        form_layout.addRow("Симптомы:", QLabel(record.get('symptoms', '')))
-        form_layout.addRow("Диагноз:", QLabel(record.get('diagnosis', '')))
-        form_layout.addRow("Лечение:", QLabel(record.get('treatment', '')))
-
-        # Вложения
-        attachments_group = QGroupBox("Вложения")
-        attachments_layout = QVBoxLayout()
-        # Вложения позволяют прикрепить к медицинской записи:
-        # Результаты анализов (сканы лабораторных исследований, PDF-отчеты)
-        # Рентгеновские снимки (изображения в форматах JPG, PNG, DICOM)
-        # Рецепты (сканы или фото назначений врача)
-        # Фото симптомов (например, кожных поражений, травм)
-        # Выписки из истории болезни (документы Word/PDF)
-        # Другие медицинские документы
-
-        attachments_list = QListWidget()
-        for attachment in record.get('attachments', []):
-            item = QListWidgetItem(attachment)
-            attachments_list.addItem(item)
-
-        attachments_layout.addWidget(attachments_list)
-        attachments_group.setLayout(attachments_layout)
-
-        layout.addLayout(form_layout)
-        layout.addWidget(attachments_group)
-
-        # Кнопка закрытия
-        close_btn = QPushButton("Закрыть")
-        close_btn.clicked.connect(dialog.close)
-
-        layout.addWidget(close_btn)
-        dialog.setLayout(layout)
-        dialog.exec()
-
-    def add_medical_record(self, branch_id, medical_list):
-        """Добавляет новую медицинскую запись.
-
-        Args:
-            branch_id (str): ID животного
-            medical_list (QListWidget): Виджет списка медицинских записей
-        """
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Добавить медицинскую запись")
-        dialog.setMinimumSize(500, 400)
-
-        layout = QVBoxLayout()
-
-        # Форма для ввода данных
-        form_layout = QFormLayout()
-
-        date_edit = QDateEdit()
-        date_edit.setDate(QDate.currentDate())
-        symptoms_edit = QTextEdit()
-        diagnosis_edit = QTextEdit()
-        treatment_edit = QTextEdit()
-
-        form_layout.addRow("Дата:", date_edit)
-        form_layout.addRow("Симптомы:", symptoms_edit)
-        form_layout.addRow("Диагноз:", diagnosis_edit)
-        form_layout.addRow("Лечение:", treatment_edit)
-
-        # Кнопка добавления вложений
-        attachments_btn = QPushButton("Добавить вложение")
-        attachments_btn.clicked.connect(self.add_attachment)
-
-        layout.addLayout(form_layout)
-        layout.addWidget(attachments_btn)
-
-        # Кнопки сохранения/отмены
-        btn_layout = QHBoxLayout()
-        save_btn = QPushButton("Сохранить")
-        save_btn.clicked.connect(lambda: self.save_medical_record(
-            branch_id, medical_list, dialog,
-            date_edit.date().toString("yyyy-MM-dd"),
-            symptoms_edit.toPlainText(),
-            diagnosis_edit.toPlainText(),
-            treatment_edit.toPlainText()
-        ))
-        cancel_btn = QPushButton("Отмена")
-        cancel_btn.clicked.connect(dialog.close)
-
-        btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(cancel_btn)
-
-        layout.addLayout(btn_layout)
-        dialog.setLayout(layout)
-        dialog.exec()
-
-    def save_medical_record(self, branch_id, medical_list, dialog, date, symptoms, diagnosis, treatment):
-        """Сохраняет новую медицинскую запись в базу данных.
-
-        Args:
-            branch_id (str): ID животного
-            medical_list (QListWidget): Виджет списка записей
-            dialog (QDialog): Диалоговое окно
-            date (str): Дата записи
-            symptoms (str): Симптомы
-            diagnosis (str): Диагноз
-            treatment (str): Лечение
-        """
-        if not diagnosis:
-            QMessageBox.warning(self, "Ошибка", "Диагноз не может быть пустым")
-            return
-
-        record_data = {
-            'date': date,
-            'symptoms': symptoms,
-            'diagnosis': diagnosis,
-            'treatment': treatment,
-            'attachments': self.attachments
-        }
-
-        if self.pSQL_db.add_medical_record(branch_id, record_data):
-            QMessageBox.information(self, "Успешно", "Запись добавлена")
-            item = QListWidgetItem(f"{date} - {diagnosis}")
-            item.setData(Qt.ItemDataRole.UserRole, record_data)
-            medical_list.addItem(item)
-            self.attachments = []  # Очищаем список вложений
-            dialog.close()
-        else:
-            QMessageBox.warning(self, "Ошибка", "Не удалось добавить запись")
-
-    def add_attachment(self):
-        """Добавляет вложение к медицинской записи."""
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(
-            self, "Выберите файл", "", "All Files (*)")
-
-        if file_path:
-            # Сохраняем файл в папку uploads
-            upload_dir = "assets/uploads"
-            os.makedirs(upload_dir, exist_ok=True)
-            new_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(file_path)}"
-            new_path = os.path.join(upload_dir, new_filename)
-
-            try:
-                import shutil
-                shutil.copy(file_path, new_path)
-                self.attachments.append(new_filename)
-                QMessageBox.information(self, "Успешно", "Файл добавлен")
-            except Exception as e:
-                QMessageBox.warning(self, "Ошибка", f"Не удалось добавить файл: {str(e)}")
-
     def show_add_branch_dialog(self):
-        """Отображает диалог добавления нового животного."""
+        """Отображает диалог добавления нового филиала."""
         dialog = QDialog(self)
         dialog.setWindowTitle("Добавить филиал")
-        dialog.setMinimumSize(500, 400)
+        dialog.setMinimumSize(500, 300)
 
         layout = QVBoxLayout()
 
@@ -556,21 +241,11 @@ class BranchWidget(QWidget):
         form_layout = QFormLayout()
 
         name_edit = QLineEdit()
-        species_edit = QLineEdit()
-        breed_edit = QLineEdit()
-        birth_date_edit = QDateEdit()
-        birth_date_edit.setDate(QDate.currentDate())
-        sex_combo = QComboBox()
-        sex_combo.addItems(["М", "Ж"])
-        owner_edit = QLineEdit()
+        address_edit = QLineEdit()
         phone_edit = QLineEdit()
 
-        form_layout.addRow("Имя:", name_edit)
-        form_layout.addRow("Вид:", species_edit)
-        form_layout.addRow("Порода:", breed_edit)
-        form_layout.addRow("Дата рождения:", birth_date_edit)
-        form_layout.addRow("Пол:", sex_combo)
-        form_layout.addRow("Хозяин:", owner_edit)
+        form_layout.addRow("Название:", name_edit)
+        form_layout.addRow("Адрес:", address_edit)
         form_layout.addRow("Телефон:", phone_edit)
 
         layout.addLayout(form_layout)
@@ -581,11 +256,7 @@ class BranchWidget(QWidget):
         save_btn.clicked.connect(lambda: self.save_branch(
             dialog,
             name_edit.text(),
-            species_edit.text(),
-            breed_edit.text(),
-            birth_date_edit.date().toString("yyyy-MM-dd"),
-            sex_combo.currentText(),
-            owner_edit.text(),
+            address_edit.text(),
             phone_edit.text()
         ))
         cancel_btn = QPushButton("Отмена")
@@ -621,12 +292,12 @@ class BranchWidget(QWidget):
         if self.pSQL_db.insert_branch(branch_data):
             QMessageBox.information(self, "Успешно", "Филиал добавлен")
             dialog.close()
-            self.get_all_branches()
+            self.load_branches_data()
         else:
             QMessageBox.warning(self, "Ошибка", "Не удалось добавить филиал")
 
     def edit_current_branch(self):
-        """Отображает диалог редактирования выбранного животного."""
+        """Отображает диалог редактирования выбранного филиала."""
         selected = self.branches_table.selectedItems()
         if not selected:
             QMessageBox.warning(self, "Ошибка", "Выберите филиал")
@@ -640,29 +311,19 @@ class BranchWidget(QWidget):
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Редактировать филиал")
-        dialog.setMinimumSize(500, 400)
+        dialog.setMinimumSize(500, 300)
 
         layout = QVBoxLayout()
 
         # Форма для редактирования
         form_layout = QFormLayout()
 
-        name_edit = QLineEdit(branch.get('name', ''))
-        species_edit = QLineEdit(branch.get('species', ''))
-        breed_edit = QLineEdit(branch.get('breed', ''))
-        birth_date_edit = QDateEdit(QDate.fromString(branch.get('birth_date', ''), "yyyy-MM-dd"))
-        sex_combo = QComboBox()
-        sex_combo.addItems(["М", "Ж"])
-        sex_combo.setCurrentText(branch.get('sex', 'М'))
-        owner_edit = QLineEdit(branch.get('owner_name', ''))
-        phone_edit = QLineEdit(branch.get('owner_phone', ''))
+        name_edit = QLineEdit(branch[1] or '')
+        address_edit = QLineEdit(branch[2] or '')
+        phone_edit = QLineEdit(branch[3] or '')
 
-        form_layout.addRow("Имя:", name_edit)
-        form_layout.addRow("Вид:", species_edit)
-        form_layout.addRow("Порода:", breed_edit)
-        form_layout.addRow("Дата рождения:", birth_date_edit)
-        form_layout.addRow("Пол:", sex_combo)
-        form_layout.addRow("Хозяин:", owner_edit)
+        form_layout.addRow("Название:", name_edit)
+        form_layout.addRow("Адрес:", address_edit)
         form_layout.addRow("Телефон:", phone_edit)
 
         layout.addLayout(form_layout)
@@ -671,13 +332,9 @@ class BranchWidget(QWidget):
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Сохранить")
         save_btn.clicked.connect(lambda: self.update_branch(
-            branch['_id'], dialog,
+            branch[0], dialog,
             name_edit.text(),
-            species_edit.text(),
-            breed_edit.text(),
-            birth_date_edit.date().toString("yyyy-MM-dd"),
-            sex_combo.currentText(),
-            owner_edit.text(),
+            address_edit.text(),
             phone_edit.text()
         ))
         cancel_btn = QPushButton("Отмена")
@@ -690,34 +347,26 @@ class BranchWidget(QWidget):
         dialog.setLayout(layout)
         dialog.exec()
 
-    def update_branch(self, _id, dialog, name, species, breed, birth_date, sex, owner_name, owner_phone):
-        """Обновляет данные животного в базе данных.
+    def update_branch(self, branch_id, dialog, name, address, phone):
+        """Обновляет данные филиала в базе данных.
 
         Args:
-            _id (int): ID животного
+            branch_id (int): ID филиала
             dialog (QDialog): Диалоговое окно
-            name (str): Имя животного
-            species (str): Вид животного
-            breed (str): Порода
-            birth_date (str): Дата рождения
-            sex (str): Пол
-            owner_name (str): Имя владельца
-            owner_phone (str): Телефон владельца
+            name (str): Название филиала
+            address (str): Адрес филиала
+            phone (str): Телефон филиала
         """
         update_data = {
             'name': name,
-            'species': species,
-            'breed': breed,
-            'birth_date': birth_date,
-            'sex': sex,
-            'owner_name': owner_name,
-            'owner_phone': owner_phone
+            'address': address,
+            'phone': phone
         }
 
-        if self.pSQL_db.update_branch(_id, update_data):
+        if self.pSQL_db.update_branch(branch_id, update_data):
             QMessageBox.information(self, "Успешно", "Данные обновлены")
             dialog.close()
-            self.get_all_branches()
+            self.load_branches_data()
         else:
             QMessageBox.warning(self, "Ошибка", "Не удалось обновить данные")
 
@@ -738,9 +387,9 @@ class BranchWidget(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            if self.pSQL_db.delete_branch(branch_id):
+            if self.pSQL_db.delete_branch(int(branch_id)):
                 QMessageBox.information(self, "Успешно", "Филиал удалён")
-                self.get_all_branches()
+                self.load_branches_data()
             else:
                 QMessageBox.warning(self, "Ошибка", "Не удалось удалить филиал")
 
@@ -850,7 +499,6 @@ class BranchWidget(QWidget):
         return True
 
 
-
 class AttachmentDelegate(QStyledItemDelegate):
     """
     Кастомный делегат для отображения кнопки открытия при наведении на вложение.
@@ -912,4 +560,3 @@ class AttachmentDelegate(QStyledItemDelegate):
             self.parent().open_attachment(index)
             return True
         return super().editorEvent(event, model, option, index)
-
