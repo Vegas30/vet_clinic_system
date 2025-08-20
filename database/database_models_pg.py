@@ -633,6 +633,239 @@ class PostgresModels:
             if conn:
                 self.db.disconnect()
 
+    def get_appointment_by_date_range(self, date_from, date_to):
+        """
+        Получает приёмы за указанный период дат
+        Args:
+            date_from (str): Начальная дата в формате 'YYYY-MM-DD'
+            date_to (str): Конечная дата в формате 'YYYY-MM-DD'
+        Returns:
+            list: Список приёмов или пустой список при ошибке
+        """
+        if not date_from or not date_to:
+            logging.error("Пустые даты в get_appointment_by_date_range")
+            return []
+
+        if date_from > date_to:
+            logging.warning(f"Некорректный диапазон дат: {date_from} > {date_to}")
+            return []
+
+        sql = """
+        SELECT id, animal_id, vet_id, date, time, service_id, status 
+        FROM Приёмы
+        WHERE date BETWEEN %s AND %s
+        ORDER BY date, time
+        """
+        try:
+            conn = self.db.connect()
+            if not conn:
+                logging.error("Не удалось подключиться к базе данных")
+                return []
+
+            with conn.cursor() as cur:
+                cur.execute(sql, (date_from, date_to))
+                result = cur.fetchall()
+                logging.debug(f"Найдено {len(result)} записей за период {date_from} - {date_to}")
+                return result
+        except Exception as e:
+            logging.error(f"Ошибка в get_appointment_by_date_range: {str(e)}")
+            return []
+        finally:
+            self.db.disconnect()
+
+    def get_appointments_by_doctor(self, vet_id, date_from, date_to):
+        """Получаем приемы конкретного доктора"""
+        sql = """
+        SELECT id, animal_id, date, time, service_id, status
+        FROM Приёмы
+        WHERE vet_id = %s AND date BETWEEN %s AND %s
+        ORDER BY date, time
+        """
+        try:
+            conn = self.db.connect()
+            if conn:
+                with conn.cursor() as cur:
+                    cur.execute(sql, (vet_id, date_from, date_to))
+                    return cur.fetchall()
+        except Exception as e:
+            print(f"Ошибка при получении приемов врача: {e}")
+            return []
+        finally:
+            self.db.disconnect()
+
+    def get_all_appointments(self, status_filter=None):
+        """Получает все приёмы из базы данных с опциональной фильтрацией по статусу
+        Args:
+            status_filter (str, optional): Фильтр по статусу ('запланирован', 'завершен', 'отменен')
+        Returns:
+            list: Список приёмов или пустой список при ошибке
+        """
+        sql = "SELECT * FROM Приёмы"
+        params = []
+
+        if status_filter:
+            sql += " WHERE status = %s"
+            params.append(status_filter)
+
+        sql += " ORDER BY date, time"
+
+        try:
+            conn = self.db.connect()
+            if not conn:
+                logging.error("Не удалось подключиться к базе данных")
+                return []
+
+            with conn.cursor() as cur:
+                cur.execute(sql, tuple(params))
+                result = cur.fetchall()
+                logging.debug(f"Найдено {len(result)} приемов" +
+                              (f" со статусом {status_filter}" if status_filter else ""))
+                return result
+        except Exception as e:
+            logging.error(f"Ошибка в get_all_appointments: {str(e)}")
+            return []
+        finally:
+            self.db.disconnect()
+
+    def get_financial_stats(self, date_from, date_to):
+        """Получает финансовую статистику за период"""
+        try:
+            conn = self.db.connect()
+            if not conn:
+                raise Exception("Не удалось подключиться к базе данных")
+
+            # Основные показатели
+            sql_main = """
+                SELECT 
+                    COUNT(*) as total_count,
+                    COALESCE(SUM(s.price), 0) as total_income,
+                    COUNT(DISTINCT a.vet_id) as doctors_count
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+                """
+
+            # Статистика по услугам
+            sql_services = """
+                SELECT 
+                    s.title as service_name,
+                    COUNT(*) as service_count,
+                    COALESCE(SUM(s.price), 0) as service_income
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+                GROUP BY s.title
+                ORDER BY service_count DESC
+                """
+
+            # Статистика по врачам
+            sql_doctors = """
+                SELECT 
+                    e.full_name as doctor_name,
+                    COUNT(*) as appointment_count,
+                    COALESCE(SUM(s.price), 0) as doctor_income
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                JOIN Сотрудники e ON a.vet_id = e.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+                GROUP BY e.full_name
+                ORDER BY appointment_count DESC
+                """
+
+            params = (date_from, date_to)
+
+            with conn.cursor() as cur:
+                # Основные показатели
+                cur.execute(sql_main, params)
+                main_stats = cur.fetchone()
+
+                # Статистика по услугам
+                cur.execute(sql_services, params)
+                services = []
+                for row in cur.fetchall():
+                    services.append({
+                        'service_name': row[0],
+                        'service_count': row[1],
+                        'service_income': float(row[2])
+                    })
+
+                # Статистика по врачам
+                cur.execute(sql_doctors, params)
+                doctors = []
+                for row in cur.fetchall():
+                    doctors.append({
+                        'doctor_name': row[0],
+                        'appointment_count': row[1],
+                        'doctor_income': float(row[2])
+                    })
+
+                return {
+                    'total_count': main_stats[0] if main_stats else 0,
+                    'total_income': float(main_stats[1]) if main_stats else 0.0,
+                    'doctors_count': main_stats[2] if main_stats else 0,
+                    'services': services,
+                    'doctors': doctors
+                }
+
+        except Exception as e:
+            logging.error(f"Ошибка при получении финансовой статистики: {str(e)}")
+            return None
+        finally:
+            self.db.disconnect()
+
+    def get_all_doctors(self):
+        """Получаем всех сотрудников с ролью 'doctor"""
+        sql = """
+        SELECT id, full_name 
+        FROM Сотрудники 
+        WHERE role = 'doctor'
+        ORDER BY full_name
+        """
+        try:
+            conn = self.db.connect()
+            cur = self.db.get_cursor()
+            if conn and cur:
+                cur.execute(sql)
+                return cur.fetchall()
+        except Exception as e:
+            logging.error(f"Ошибка при получении списка врачей: {str(e)}")
+            return []
+        finally:
+            self.db.disconnect()
+
+    def get_monthly_stats(self, year=None):
+        """Статистика приемов и услуг по месяцам"""
+        sql = """
+        SELECT 
+            EXTRACT(MONTH FROM date) AS month,
+            COUNT(*) AS total_appointments,
+            COUNT(DISTINCT animal_id) AS unique_animals,
+            COUNT(DISTINCT vet_id) AS unique_vets,
+            SUM(CASE WHEN status = 'завершен' THEN 1 ELSE 0 END) AS completed,
+            SUM(s.price) AS total_income
+        FROM Приёмы a
+        JOIN Услуги s ON a.service_id = s.id
+        """
+
+        params = []
+        if year:
+            sql += " WHERE EXTRACT(YEAR FROM date) = %s"
+            params.append(year)
+
+        sql += " GROUP BY month ORDER BY month"
+
+        try:
+            conn = self.db.connect()
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+        except Exception as e:
+            logging.error(f"Ошибка получения статистики: {str(e)}")
+            return []
+
     def check_vet_availability(self, vet_id, date, time, exclude_id=None):
         """
         Проверяет доступность ветеринара в указанное время

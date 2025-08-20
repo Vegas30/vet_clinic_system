@@ -90,4 +90,18 @@
 -- (3, '2025-07-09 17:45:31', 'выход'),
 -- (7, '2025-07-09 09:30:10', 'вход');
 
+UPDATE Сотрудники
+SET role = CASE
+    WHEN role = 'Администратор' THEN 'admin'
+    WHEN role = 'Врач' THEN 'doctor'
+    WHEN role = 'Менеджер' THEN 'manager'
+    WHEN role = 'Регистратор' THEN 'registrar'
+    ELSE role
+END;
+
+CREATE INDEX idx_appointments_date ON Приёмы(date);
+
+CREATE INDEX idx_appointments_date_month ON Приёмы(EXTRACT(MONTH FROM date));
+CREATE INDEX idx_appointments_date_year ON Приёмы(EXTRACT(YEAR FROM date));
+
 

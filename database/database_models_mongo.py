@@ -175,3 +175,29 @@ class MongoDBModels:
         except Exception as e:
             print(f"Ошибка при получении всех животных: {e}")
             return []
+
+    def get_all_diagnoses(self):
+        """Получает список уникальных диагнозов"""
+        try:
+            pipeline = [
+                {"$unwind": "$medical_history"},
+                {"$group": {"_id": "$medical_history.diagnosis"}},
+                {"$sort": {"_id": 1}}
+            ]
+            diagnoses = self.collection.aggregate(pipeline)
+            return [d['_id'] for d in diagnoses if d['_id']]
+        except Exception as e:
+            print(f"Ошибка при получении диагнозов: {e}")
+            return []
+
+    def get_animals_by_diagnosis(self, diagnosis):
+        """Получает животных с указанным диагнозом"""
+        try:
+            animals = self.collection.find({
+                "medical_history.diagnosis": diagnosis
+            })
+            return list(animals)
+        except Exception as e:
+            print(f"Ошибка при поиске животных по диагнозу: {e}")
+            return []
+
