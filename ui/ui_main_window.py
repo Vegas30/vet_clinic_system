@@ -5,7 +5,7 @@ from ui.ui_animals_widget import AnimalsWidget
 from ui.ui_appointments_widget import AppointmentsWidget
 from ui.ui_branch_widget import BranchWidget
 # from ui.ui_staff_widget import StaffWidget
-# from ui.ui_reports_widget import ReportsWidget
+from ui.ui_reports_widget import ReportsWidget
 from ui.ui_services_widget import ServicesWidget
 
 class MainWindow(QMainWindow):
@@ -29,6 +29,12 @@ class MainWindow(QMainWindow):
         # Вкладка Приёмы
         self.appointments_widget = AppointmentsWidget(self.user_data)
         self.tab_widget.addTab(self.appointments_widget, "Приёмы")
+
+        # Отключаем старые соединения перед созданием новых
+        try:
+            self.appointments_widget.data_updated.disconnect()
+        except:
+            pass
         self.appointments_widget.data_updated.connect(self.handle_data_update)
 
         # Вкладка Сотрудники
@@ -51,18 +57,29 @@ class MainWindow(QMainWindow):
         #     self.staff_widget = None
 
         # Вкладка Отчёты
-        # self.reports_widget = ReportsWidget()
-        # self.tab_widget.addTab(self.reports_widget, "Отчёты")
-        self.reports_widget = QWidget()
+        self.reports_widget = ReportsWidget(self.user_data)
         self.tab_widget.addTab(self.reports_widget, "Отчёты")
+        # bf.tab_widget.addTab(self.reports_widget, "Отчёты")
 
         # Вкладка Услуги
         self.services_widget = ServicesWidget(self.user_data)
         self.tab_widget.addTab(self.services_widget, "Услуги")
+
+        # Отключаем старые соединения перед созданием новых
+        try:
+            self.services_widget.data_updated.disconnect()
+        except:
+            pass
         self.services_widget.data_updated.connect(self.handle_data_update)
 
     def handle_data_update(self):
         """Обновляет данные во всех виджетах при изменении"""
-        self.animals_widget.load_all_animals()  # Перезагружаем список животных
-        self.appointments_widget.load_appointments()  # Перезагружаем список приёмы
-        self.services_widget.load_services() # Перезагружаем список услуги
+        # Добавляем проверку, чтобы избежать рекурсии
+        if not hasattr(self, '_updating'):
+            self._updating = True
+            try:
+                self.animals_widget.load_all_animals()
+                self.appointments_widget.load_appointments()
+                self.services_widget.load_services()
+            finally:
+                del self._updating

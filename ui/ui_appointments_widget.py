@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QHeaderView, QDateEdit, QComboBox, QCompleter, QDialog, QFormLayout,
     QMessageBox, QTimeEdit, QGroupBox, QAbstractItemView, QStyledItemDelegate, QCalendarWidget, QTextEdit, QLineEdit
 )
-from PyQt6.QtCore import Qt, QDate, QTime, pyqtSignal
-from PyQt6.QtGui import QIcon, QPalette
+from PyQt6.QtCore import Qt, QDate, QTime, pyqtSignal, QRegularExpression
+from PyQt6.QtGui import QIcon, QPalette, QRegularExpressionValidator
 from database.database_models_pg import PostgresModels
 from database.database_models_mongo import MongoDBModels
 from datetime import datetime, timedelta
@@ -114,6 +114,7 @@ class AppointmentsWidget(QWidget):
         self.appointments_table.verticalHeader().setVisible(False)
         self.appointments_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
+
         # Устанавливаем делегат для цветового выделения статуса
         self.appointments_table.setItemDelegate(StatusDelegate())
 
@@ -166,8 +167,8 @@ class AppointmentsWidget(QWidget):
                 animal_name = animal.get('name', 'Неизвестно') if animal else "Животное не найдено"
 
                 # Получаем данные врача
-                vet = self.db_pg.get_employee_by_id(vet_id)
-                vet_name = vet[1] if vet else "Врач не найден"
+                doctor = self.db_pg.get_employee_by_id(vet_id)
+                doctor_name = doctor[1] if doctor else "Врач не найден"
 
                 # Получаем данные услуги
                 service = self.db_pg.get_service_by_id(service_id)
@@ -182,7 +183,7 @@ class AppointmentsWidget(QWidget):
                 self.appointments_table.setItem(row, 1, QTableWidgetItem(date.strftime("%d.%m.%Y")))
                 self.appointments_table.setItem(row, 2, QTableWidgetItem(time.strftime("%H:%M")))
                 self.appointments_table.setItem(row, 3, QTableWidgetItem(animal_name))
-                self.appointments_table.setItem(row, 4, QTableWidgetItem(vet_name))
+                self.appointments_table.setItem(row, 4, QTableWidgetItem(doctor_name))
                 self.appointments_table.setItem(row, 5, QTableWidgetItem(service_display))
                 self.appointments_table.setItem(row, 6, QTableWidgetItem(status))
 
@@ -324,8 +325,8 @@ class AppointmentDialog(QDialog):
         form_layout.addRow("Животное:", animal_layout)
 
         # Врач
-        self.vet_combo = QComboBox()
-        form_layout.addRow("Врач:", self.vet_combo)
+        self.doctor_combo = QComboBox()
+        form_layout.addRow("Врач:", self.doctor_combo)
 
         # Услуга
         self.service_combo = QComboBox()
@@ -434,7 +435,7 @@ class AppointmentDialog(QDialog):
         """Отображает диалог добавления нового животного."""
         dialog = QDialog(self)
         dialog.setWindowTitle("Добавить животное")
-        dialog.setMinimumSize(400, 300)
+        dialog.setMinimumSize(500, 400)
 
         layout = QFormLayout()
 
@@ -444,6 +445,18 @@ class AppointmentDialog(QDialog):
         self.breed_edit = QLineEdit()
         self.owner_edit = QLineEdit()
         self.phone_edit = QLineEdit()
+        self.phone_edit.setText("+7")  # Устанавливаем +7 по умолчанию
+        self.phone_edit.setPlaceholderText("Введите 10 цифр после +7 (без 8)")
+        self.phone_edit.textChanged.connect(self.validate_phone_input)
+
+        # Добавляем валидатор для ограничения длины
+        self.phone_edit.setMaxLength(12)  # +7 и 10 цифр
+
+        # phone_validator = QRegularExpressionValidator(
+        #     QRegularExpression(r"^\+7\d{0,10}$"),  # +7 и до 10 цифр
+        #     self.phone_edit
+        # )
+        # self.phone_edit.setValidator(phone_validator)
 
         layout.addRow("Имя:", self.name_edit)
         layout.addRow("Вид:", self.species_edit)
@@ -464,6 +477,36 @@ class AppointmentDialog(QDialog):
 
         dialog.setLayout(layout)
         dialog.exec()
+
+    def validate_phone_input(self, text):
+        """Валидирует ввод телефона, сохраняя +7 в начале и проверяя на наличие 8."""
+        # Если текст пустой или просто "+", устанавливаем "+7"
+        if len(text) <= 1:
+            self.phone_edit.setText("+7")
+            self.phone_edit.setCursorPosition(2)
+            return
+
+        # Проверяем, начинается ли введенный номер с 8 (после +7)
+        if len(text) > 2 and text[2] == '8':
+            QMessageBox.warning(
+                self,
+                "Некорректный ввод",
+                "Пожалуйста, введите телефон без 8. Используйте формат +7XXXXXXXXXX"
+            )
+            # Удаляем 8 из номера
+            new_text = "+7" + text[3:].lstrip('8')  # Удаляем все 8 после +7
+            self.phone_edit.setText(new_text)
+            self.phone_edit.setCursorPosition(len(new_text))
+            return
+
+        # Обеспечиваем, чтобы номер начинался с +7
+        if not text.startswith("+7"):
+            # Оставляем только цифры
+            digits = ''.join(filter(str.isdigit, text))
+            # Формируем новый текст
+            new_text = "+7" + digits[:10]  # Ограничиваем 10 цифрами после +7
+            self.phone_edit.setText(new_text)
+            self.phone_edit.setCursorPosition(len(new_text))
 
     def save_new_animal(self, dialog):
         """Сохраняет новое животное в базу данных."""
@@ -517,12 +560,12 @@ class AppointmentDialog(QDialog):
         self.service_combo.setCurrentIndex(0)  # "Выберите услугу"
 
         # Устанавливаем текущего пользователя как ветеринара, если он врач
-        if self.user_data['role'] == 'vet':
-            vet_index = self.vet_combo.findData(self.user_data['id'])
-            if vet_index >= 0:
-                self.vet_combo.setCurrentIndex(vet_index)
+        if self.user_data['role'] == 'doctor':
+            doctor_index = self.doctor_combo.findData(self.user_data['id'])
+            if doctor_index >= 0:
+                self.doctor_combo.setCurrentIndex(doctor_index)
         else:
-            self.vet_combo.setCurrentIndex(0)  # "Выберите врача"
+            self.doctor_combo.setCurrentIndex(0)  # "Выберите врача"
 
         # Устанавливаем текущую дату и ближайшее доступное время
         self.date_edit.setDate(QDate.currentDate())
@@ -543,7 +586,7 @@ class AppointmentDialog(QDialog):
 
     def update_available_times(self):
         """Обновляет доступное время при изменении даты или врача"""
-        vet_id = self.vet_combo.currentData()
+        vet_id = self.doctor_combo.currentData()
         date = self.date_edit.date()
 
         if vet_id and date.isValid():
@@ -558,14 +601,14 @@ class AppointmentDialog(QDialog):
         try:
             # Очищаем списки перед загрузкой
             self.animal_combo.clear()
-            self.vet_combo.clear()
+            self.doctor_combo.clear()
             self.service_combo.clear()
 
             # Добавляем пустой элемент в начало списка животных
             self.animal_combo.addItem("Выберите животное или добавьте новое", None)
 
             # Для врачей и услуг оставляем обязательный выбор
-            self.vet_combo.addItem("Выберите врача", None)
+            self.doctor_combo.addItem("Выберите врача", None)
             self.service_combo.addItem("Выберите услугу", None)
 
             # Загрузка животных
@@ -577,9 +620,9 @@ class AppointmentDialog(QDialog):
                 )
 
             # Загрузка ветеринаров
-            employees = self.db_pg.get_all_employees()
-            for emp in employees:
-                self.vet_combo.addItem(emp[1], emp[0])
+            doctors = self.db_pg.get_all_doctors()
+            for doc in doctors:
+                self.doctor_combo.addItem(doc[1], doc[0])
 
             # Загрузка услуг
             services = self.db_pg.get_all_services()
@@ -616,9 +659,9 @@ class AppointmentDialog(QDialog):
                 self.animal_combo.setCurrentIndex(animal_index)
 
             # Устанавливаем врача
-            vet_index = self.vet_combo.findData(vet_id)
-            if vet_index >= 0:
-                self.vet_combo.setCurrentIndex(vet_index)
+            doctor_index = self.doctor_combo.findData(vet_id)
+            if doctor_index >= 0:
+                self.doctor_combo.setCurrentIndex(doctor_index)
 
             # Устанавливаем услугу
             service_index = self.service_combo.findData(service_id)
@@ -646,10 +689,11 @@ class AppointmentDialog(QDialog):
 
     def save_appointment(self):
         """Сохраняет приём в базу данных."""
+        conn = None
         try:
             # Получаем данные из формы
             animal_id = self.animal_combo.currentData()
-            vet_id = self.vet_combo.currentData()
+            vet_id = self.doctor_combo.currentData()
             service_id = self.service_combo.currentData()
             date = self.date_edit.date()  # QDate object
             time = self.time_edit.time()  # QTime object
@@ -720,6 +764,9 @@ class AppointmentDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить приём: {str(e)}")
             logging.error(f"Ошибка сохранения приёма: {str(e)}")
+        finally:
+            if conn:
+                self.db_pg.disconnect()
 
 
 class StatusDelegate(QStyledItemDelegate):

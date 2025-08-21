@@ -30,13 +30,6 @@ def create_test_user():
     print("Тестовый пользователь создан: login='test', password='test'")
 
 
-def add(a, b):
-    return a + b
-
-
-def subtract(a, b):
-    return (a - b)
-
 
 def main():
     try:

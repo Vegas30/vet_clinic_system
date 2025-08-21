@@ -588,6 +588,18 @@ class AnimalsWidget(QWidget):
         owner_edit = QLineEdit()
         phone_edit = QLineEdit()
 
+        # Валидация телефона с обработкой ошибок
+        try:
+            phone_edit.setText("+7")  # Устанавливаем +7 по умолчанию
+            phone_edit.setPlaceholderText("Введите 10 цифр после +7 (без 8)")
+            phone_edit.setMaxLength(12)  # +7 и 10 цифр
+
+        except Exception as e:
+            # Если возникла ошибка при настройке валидации, просто продолжаем без нее
+            logging.warning(f"Ошибка при настройке валидации телефона: {str(e)}")
+            # Устанавливаем базовые настройки без валидации
+            phone_edit.setPlaceholderText("Введите телефон (например: +79991234567)")
+
         form_layout.addRow("Имя:", name_edit)
         form_layout.addRow("Вид:", species_edit)
         form_layout.addRow("Порода:", breed_edit)

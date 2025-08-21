@@ -184,15 +184,9 @@ class ServicesWidget(QWidget):
         self.services_table.setHorizontalHeaderLabels(["ID", "Название", "Описание", "Цена"])
 
         # Настройка отображения таблицы
-        self.services_table.setColumnWidth(0, 50)  # Фиксированная ширина для ID
-        self.services_table.setColumnWidth(3, 100)  # Фиксированная ширина для цены
-
-        # Растягивание колонок названия и описания
-        self.services_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.services_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-
+        self.services_table.horizontalHeader().setSectionResizeMode(
+                    QHeaderView.ResizeMode.Stretch)  # Равномерное растяжение
         self.services_table.verticalHeader().setVisible(False) # Скрыть нумерацию строк
-
         # Настройка выделения строк
         self.services_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.services_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
