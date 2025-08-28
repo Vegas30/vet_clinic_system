@@ -3,6 +3,7 @@ from database.database_mongodb_connector import MongoDBConnector
 from bson.objectid import ObjectId
 from datetime import datetime
 import uuid
+import logging
 
 
 class MongoDBModels:
@@ -30,7 +31,7 @@ class MongoDBModels:
             print(f"Создано животное с ID: {result.inserted_id}")
             return animal_data['_id']
         except Exception as e:
-            print(f"Ошибка при создании животного: {e}")
+            logging.error(f"Ошибка при создании животного: {e}")
             return None
 
     def get_animal_by_id(self, animal_id):
@@ -44,7 +45,7 @@ class MongoDBModels:
             animal = self.collection.find_one({'_id': animal_id})
             return animal
         except Exception as e:
-            print(f"Ошибка при получении животного по ID: {e}")
+            logging.error(f"Ошибка при получении животного по ID: {e}")
             return None
 
     def update_animal(self, animal_id, update_data):
@@ -66,7 +67,7 @@ class MongoDBModels:
             print(f"Обновлено {result.modified_count} документов")
             return result.modified_count
         except Exception as e:
-            print(f"Ошибка при обновлении животного: {e}")
+            logging.error(f"Ошибка при обновлении животного: {e}")
             return 0
 
     def delete_animal(self, animal_id):
@@ -81,7 +82,7 @@ class MongoDBModels:
             print(f"Удалено {result.deleted_count} документов")
             return result.deleted_count
         except Exception as e:
-            print(f"Ошибка при удалении животного: {e}")
+            logging.error(f"Ошибка при удалении животного: {e}")
             return 0
 
     def search_animals(self, search_criteria):
@@ -95,7 +96,7 @@ class MongoDBModels:
             animals = list(self.collection.find(search_criteria))
             return animals
         except Exception as e:
-            print(f"Ошибка при поиске животных: {e}")
+            logging.error(f"Ошибка при поиске животных: {e}")
             return []
 
     def add_medical_record(self, animal_id, record_data):
@@ -119,7 +120,7 @@ class MongoDBModels:
                 return self.get_animal_by_id(animal_id)
             return None
         except Exception as e:
-            print(f"Ошибка при добавлении медицинской записи: {e}")
+            logging.error(f"Ошибка при добавлении медицинской записи: {e}")
             return None
 
     def update_medical_record(self, animal_id, record_index, update_data):
@@ -144,7 +145,7 @@ class MongoDBModels:
                 return self.get_animal_by_id(animal_id)
             return None
         except Exception as e:
-            print(f"Ошибка при обновлении медицинской записи: {e}")
+            logging.error(f"Ошибка при обновлении медицинской записи: {e}")
             return None
 
     def get_animals_by_diagnosis(self, diagnosis):
@@ -160,7 +161,7 @@ class MongoDBModels:
             }))
             return animals
         except Exception as e:
-            print(f"Ошибка при поиске животных по диагнозу: {e}")
+            logging.error(f"Ошибка при поиске животных по диагнозу: {e}")
             return []
 
     def get_all_animals(self):
@@ -173,7 +174,7 @@ class MongoDBModels:
             animals = list(self.collection.find())
             return animals
         except Exception as e:
-            print(f"Ошибка при получении всех животных: {e}")
+            logging.error(f"Ошибка при получении всех животных: {e}")
             return []
 
     def get_all_diagnoses(self):
@@ -187,7 +188,7 @@ class MongoDBModels:
             diagnoses = self.collection.aggregate(pipeline)
             return [d['_id'] for d in diagnoses if d['_id']]
         except Exception as e:
-            print(f"Ошибка при получении диагнозов: {e}")
+            logging.error(f"Ошибка при получении диагнозов: {e}")
             return []
 
     def get_animals_by_diagnosis(self, diagnosis):
@@ -198,6 +199,6 @@ class MongoDBModels:
             })
             return list(animals)
         except Exception as e:
-            print(f"Ошибка при поиске животных по диагнозу: {e}")
+            logging.error(f"Ошибка при поиске животных по диагнозу: {e}")
             return []
 

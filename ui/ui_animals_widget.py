@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import (
     QListWidget, QListWidgetItem, QTextEdit, QDateEdit, QFileDialog,
     QComboBox, QGroupBox, QHeaderView, QTabWidget, QStyleOptionViewItem, QStyledItemDelegate, QMenu
 )
-from PyQt6.QtCore import Qt, QDate, QEvent, QRect, QUrl
-from PyQt6.QtGui import QPixmap, QIcon, QDesktopServices
+from PyQt6.QtCore import Qt, QDate, QEvent, QRect, QUrl, QRegularExpression
+from PyQt6.QtGui import QPixmap, QIcon, QDesktopServices, QRegularExpressionValidator
 from datetime import datetime
 from database.database_models_mongo import MongoDBModels
 
@@ -588,17 +588,15 @@ class AnimalsWidget(QWidget):
         owner_edit = QLineEdit()
         phone_edit = QLineEdit()
 
-        # Валидация телефона с обработкой ошибок
-        try:
-            phone_edit.setText("+7")  # Устанавливаем +7 по умолчанию
-            phone_edit.setPlaceholderText("Введите 10 цифр после +7 (без 8)")
-            phone_edit.setMaxLength(12)  # +7 и 10 цифр
+        phone_validator = QRegularExpressionValidator(
+            QRegularExpression(r"\+7\d{10}")  # +7 и 10 цифр
+        )
+        phone_edit.setValidator(phone_validator)
+        phone_edit.setText("+7")
+        phone_edit.setPlaceholderText("+7XXXXXXXXXX")
 
-        except Exception as e:
-            # Если возникла ошибка при настройке валидации, просто продолжаем без нее
-            logging.warning(f"Ошибка при настройке валидации телефона: {str(e)}")
-            # Устанавливаем базовые настройки без валидации
-            phone_edit.setPlaceholderText("Введите телефон (например: +79991234567)")
+        # Добавляем обработчик для проверки ввода 8
+        phone_edit.textChanged.connect(lambda text: self.validate_phone_input(text, phone_edit))
 
         form_layout.addRow("Имя:", name_edit)
         form_layout.addRow("Вид:", species_edit)
@@ -632,6 +630,37 @@ class AnimalsWidget(QWidget):
         layout.addLayout(btn_layout)
         dialog.setLayout(layout)
         dialog.exec()
+
+    def validate_phone_input(self, text, phone_edit):
+        """Валидирует ввод телефона, проверяя на наличие 8 после +7."""
+        # Блокируем сигнал чтобы избежать рекурсии
+        phone_edit.blockSignals(True)
+
+        try:
+            # Проверяем, начинается ли введенный номер с 8 (после +7)
+            if len(text) > 2 and text[2] == '8':
+                QMessageBox.warning(
+                    self,
+                    "Некорректный ввод",
+                    "Пожалуйста, введите телефон без 8. Используйте формат +7XXXXXXXXXX"
+                )
+                # Удаляем 8 из номера
+                new_text = "+7" + text[3:].lstrip('8')  # Удаляем все 8 после +7
+                phone_edit.setText(new_text)
+                phone_edit.setCursorPosition(len(new_text))
+            # Обеспечиваем, чтобы номер начинался с +7
+            if not text.startswith("+7"):
+                # Оставляем только цифры
+                digits = ''.join(filter(str.isdigit, text))
+                # Формируем новый текст
+                new_text = "+7" + digits[:10]  # Ограничиваем 10 цифрами после +7
+                phone_edit.setText(new_text)
+                phone_edit.setCursorPosition(len(new_text))
+
+        finally:
+            # Всегда разблокируем сигнал
+            phone_edit.blockSignals(False)
+
 
     def save_animal(self, dialog, name, species, breed, birth_date, sex, owner_name, owner_phone):
         """Сохраняет новое животное в базу данных.
@@ -699,6 +728,12 @@ class AnimalsWidget(QWidget):
         sex_combo.setCurrentText(animal.get('sex', 'М'))
         owner_edit = QLineEdit(animal.get('owner_name', ''))
         phone_edit = QLineEdit(animal.get('owner_phone', ''))
+
+        phone_validator = QRegularExpressionValidator(
+            QRegularExpression(r"\+7\d{10}")  # +7 и 10 цифр
+        )
+        phone_edit.setValidator(phone_validator)
+        phone_edit.textChanged.connect(lambda text: self.validate_phone_input(text, phone_edit))
 
         form_layout.addRow("Имя:", name_edit)
         form_layout.addRow("Вид:", species_edit)

@@ -74,7 +74,7 @@ class ReportsWidget(QWidget):
 
         filter_layout.addLayout(left_filter_layout)
 
-        # Период отчета
+        # Создаем period_group перед его использованием
         self.period_group = QGroupBox("Период")
         period_layout = QHBoxLayout(self.period_group)
         filter_layout.addWidget(self.period_group)
@@ -122,21 +122,6 @@ class ReportsWidget(QWidget):
         self.setLayout(main_layout)
         self.update_ui_for_report_type()
 
-        # self.date_from = QDateEdit()
-        # self.date_from.setDate(QDate.currentDate().addDays(-7))  # По умолчанию - неделя назад
-        # self.date_from.setCalendarPopup(True)
-        # self.date_from.setDisplayFormat("dd.MM.yyyy")
-        #
-        # self.date_to = QDateEdit()
-        # self.date_to.setDate(QDate.currentDate())  # По умолчанию - сегодня
-        # self.date_to.setCalendarPopup(True)
-        # self.date_to.setDisplayFormat("dd.MM.yyyy")
-        #
-        # period_layout.addWidget(QLabel("С:"))
-        # period_layout.addWidget(self.date_from)
-        # period_layout.addWidget(QLabel("По:"))
-        # period_layout.addWidget(self.date_to)
-
     def create_period_widgets(self):
         """Создает виджеты для выбора периода"""
         # Виджеты для статистики
@@ -163,6 +148,7 @@ class ReportsWidget(QWidget):
         self.date_to.setCalendarPopup(True)
         self.date_to.setDisplayFormat("dd.MM.yyyy")
         self.date_to.setDate(QDate.currentDate())
+
 
     def update_ui_for_report_type(self):
         """Обновляет интерфейс в зависимости от выбранного типа отчета"""
@@ -211,6 +197,7 @@ class ReportsWidget(QWidget):
             self.year_combo.setVisible(True)
             self.year_combo.setEnabled(True)
 
+
         else:
             # Настройка для других типов отчетов
             self.period_group.setTitle("Период")
@@ -257,7 +244,7 @@ class ReportsWidget(QWidget):
         #     self.update_statistics_filters()
 
     def setup_statistics_ui(self):
-        """Настройка интерфейса для отчета Статистика"""
+        """Настройка интерфейса для статистики"""
         try:
             # Очищаем и настраиваем комбобокс параметров
             self.param_combo.clear()
@@ -290,6 +277,7 @@ class ReportsWidget(QWidget):
         self.month_combo.setEnabled(is_monthly)
         self.year_combo.setVisible(True)
         self.year_combo.setEnabled(True)
+
 
     def load_diagnoses(self):
         """Загружает список диагнозов для комбобокса"""
@@ -388,60 +376,6 @@ class ReportsWidget(QWidget):
             QMessageBox.critical(self, "Ошибка", f"Не удалось сформировать отчет:\n{str(e)}")
             logging.error(f"Ошибка формирования отчета: {str(e)}")
 
-    # def generate_monthly_stats(self):
-    #     """Генерация месячной статистики"""
-    #     try:
-    #         selected_year = int(self.year_combo.currentText())
-    #         selected_month = self.month_combo.currentIndex() + 1
-    #
-    #         # Получаем данные из БД
-    #         result = self.report_generator.generate_monthly_stats_report(
-    #             year=selected_year,
-    #             month=selected_month
-    #         )
-    #
-    #         # Проверяем структуру полученных данных
-    #         if not result or len(result) != 2 or not result[1]:
-    #             return ["Месяц", "Количество приемов", "Доход"], [["Нет данных за выбранный период"]]
-    #
-    #         headers, raw_data = result
-    #         data = []
-    #
-    #         # Форматируем данные для отображения
-    #         for row in raw_data:
-    #             try:
-    #                 # Проверяем, что строка содержит достаточно элементов
-    #                 if len(row) < 3:
-    #                     continue
-    #
-    #                 month_name = str(row[0]).strip() if row[0] else "Неизвестно"
-    #                 appointments = int(row[1]) if row[1] else 0
-    #
-    #                 # Обрабатываем доход (может быть числом или строкой "1000.00 ₽")
-    #                 income = 0.0
-    #                 if isinstance(row[2], str):
-    #                     try:
-    #                         income_str = row[2].replace('₽', '').strip()
-    #                         income = float(income_str)
-    #                     except (ValueError, AttributeError):
-    #                         income = 0.0
-    #                 elif isinstance(row[2], (int, float)):
-    #                     income = float(row[2])
-    #
-    #                 data.append([month_name, appointments, f"{income:.2f} ₽"])
-    #             except Exception as e:
-    #                 logging.error(f"Ошибка обработки строки данных: {row}. Ошибка: {str(e)}")
-    #                 continue
-    #
-    #         if not data:
-    #             return ["Месяц", "Количество приемов", "Доход"], [["Нет данных за выбранный период"]]
-    #
-    #         return ["Месяц", "Количество приемов", "Доход"], data
-    #
-    #     except Exception as e:
-    #         logging.error(f"Ошибка генерации месячной статистики: {str(e)}")
-    #         return ["Ошибка"], [[f"Не удалось сформировать отчет: {str(e)}"]]
-
     def generate_yearly_stats(self):
         """Генерация годовой статистики"""
         try:
@@ -519,7 +453,7 @@ class ReportsWidget(QWidget):
     #     chart_window.setLayout(layout)
     #     chart_window.resize(800, 500)
     #     chart_window.show()
-
+    #
     # def draw_monthly_chart(self, fig, data):
     #     """Рисует график месячной статистики"""
     #     months = [row[0] for row in data]
@@ -537,7 +471,7 @@ class ReportsWidget(QWidget):
     #     ax2.set_ylabel('Сумма (₽)')
     #
     #     fig.tight_layout()
-
+    #
     # def draw_yearly_chart(self, fig, data):
     #     """Рисует график годовой статистики"""
     #     years = [str(row[0]) for row in data]
@@ -664,6 +598,7 @@ class ReportsWidget(QWidget):
     #         logging.error(f"Ошибка при создании графика: {str(e)}")
     #         QMessageBox.critical(self, "Ошибка",
     #                              f"Не удалось отобразить график:\n{str(e)}")
+
     def export_to_pdf(self):
         """Экспорт текущего отчета в PDF"""
         if self.results_table.rowCount() == 0:

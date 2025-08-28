@@ -1,3 +1,4 @@
+import logging
 import os
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
@@ -148,9 +149,13 @@ class BranchWidget(QWidget):
         Args:
             branches (list): Список кортежей с данными филиалов (id, name, address, phone)
         """
+        # Очищаем таблицу
+        self.branches_table.setRowCount(0)
+
         self.branches_table.setRowCount(len(branches))
+
         for row, branch in enumerate(branches):
-            self.branches_table.insertRow(row)
+
             # branch - это кортеж: (id, name, address, phone)
             self.branches_table.setItem(row, 0, QTableWidgetItem(str(branch[0])))
             self.branches_table.setItem(row, 1, QTableWidgetItem(branch[1] or ''))
@@ -186,17 +191,9 @@ class BranchWidget(QWidget):
     def show_current_branch_details(self):
         """Отображает детальную информацию о выбранном филиале."""
         try:
-            selected_items = self.branches_table.selectedItems()
-
-            # Проверяем, что выбрана хотя бы одна ячейка
-            if not selected_items or len(selected_items) == 0:
-                QMessageBox.warning(self, "Ошибка", "Выберите филиал из таблицы")
-                return
-
-            # Получаем ID из первого столбца выбранной строки
             selected_row = self.branches_table.currentRow()
             if selected_row < 0:
-                QMessageBox.warning(self, "Ошибка", "Не выбрана строка")
+                QMessageBox.warning(self, "Ошибка", "Выберите филиал из таблицы")
                 return
 
             branch_id_item = self.branches_table.item(selected_row, 0)
@@ -215,19 +212,19 @@ class BranchWidget(QWidget):
                 QMessageBox.warning(self, "Ошибка", "Филиал не найден")
                 return
 
-            # Отображаем детальную информацию
+            # Используем ключи словаря вместо индексов
             details_text = f"""
-            ID: {branch[0]}
-            Название: {branch[1]}
-            Адрес: {branch[2]}
-            Телефон: {branch[3]}
+            ID: {branch.get('id', 'N/A')}
+            Название: {branch.get('name', 'Не указано')}
+            Адрес: {branch.get('address', 'Не указан')}
+            Телефон: {branch.get('phone', 'Не указан')}
             """
 
             QMessageBox.information(self, "Детали филиала", details_text)
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {str(e)}")
-            print(f"Error in show_current_branch_details: {e}")
+            logging.error(f"Error in show_current_branch_details: {e}")
 
     def show_add_branch_dialog(self):
         """Отображает диалог добавления нового филиала."""
@@ -318,9 +315,10 @@ class BranchWidget(QWidget):
         # Форма для редактирования
         form_layout = QFormLayout()
 
-        name_edit = QLineEdit(branch[1] or '')
-        address_edit = QLineEdit(branch[2] or '')
-        phone_edit = QLineEdit(branch[3] or '')
+        # Используем ключи словаря вместо индексов
+        name_edit = QLineEdit(branch.get('name', '') or '')
+        address_edit = QLineEdit(branch.get('address', '') or '')
+        phone_edit = QLineEdit(branch.get('phone', '') or '')
 
         form_layout.addRow("Название:", name_edit)
         form_layout.addRow("Адрес:", address_edit)
@@ -332,7 +330,7 @@ class BranchWidget(QWidget):
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Сохранить")
         save_btn.clicked.connect(lambda: self.update_branch(
-            branch[0], dialog,
+            branch.get('id'), dialog,
             name_edit.text(),
             address_edit.text(),
             phone_edit.text()

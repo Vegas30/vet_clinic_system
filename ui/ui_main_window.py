@@ -7,6 +7,8 @@ from ui.ui_branch_widget import BranchWidget
 # from ui.ui_staff_widget import StaffWidget
 from ui.ui_reports_widget import ReportsWidget
 from ui.ui_services_widget import ServicesWidget
+from ui.ui_staff_widget import StaffWidget
+
 
 class MainWindow(QMainWindow):
     def __init__(self, user_data):
@@ -40,8 +42,15 @@ class MainWindow(QMainWindow):
         # Вкладка Сотрудники
         # self.staff_widget = StaffWidget()
         # self.tab_widget.addTab(self.staff_widget, "Сотрудники")
-        self.staff_widget = QWidget()
-        self.tab_widget.addTab(self.staff_widget, "Сотрудники")
+
+
+        if self.user_data['role'] == 'admin':
+            self.staff_widget = StaffWidget(self.user_data)
+            self.tab_widget.addTab(self.staff_widget, "Сотрудники")
+        else:
+            # Для не-админов скрываем вкладку сотрудников
+            self.staff_widget = StaffWidget(self.user_data)
+
 
         # Вкладка Филиалы
         self.branch_widget = BranchWidget()
@@ -49,12 +58,6 @@ class MainWindow(QMainWindow):
         # self.branch_widget = QWidget()
         # self.tab_widget.addTab(self.branch_widget, "Филиалы")
 
-        # if self.user_data['role'] == 'admin':
-        #     self.staff_widget = StaffWidget(self.user_data)
-        #     self.tab_widget.addTab(self.staff_widget, "Сотрудники")
-        # else:
-        #     # Для не-админов скрываем вкладку сотрудников
-        #     self.staff_widget = None
 
         # Вкладка Отчёты
         self.reports_widget = ReportsWidget(self.user_data)

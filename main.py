@@ -1,6 +1,6 @@
 # main
+import locale
 import sys
-
 from PyQt6.QtWidgets import QApplication, QDialog
 import logging
 from datetime import datetime
@@ -8,6 +8,8 @@ from datetime import datetime
 from ui.ui_main_window import MainWindow
 from ui.ui_login_window import LoginWindow
 
+from database.database_models_pg import PostgresModels
+from database.database_models_mongo import MongoDBModels
 
 logging.basicConfig(
     filename=f'app_errors_{datetime.now().strftime("%Y-%m-%d")}.log',
@@ -15,26 +17,56 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+try:
+    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+except locale.Error:
+    print("Warning: Russian locale not available, fallback to system default", file=sys.stderr)
 
-def create_test_user():
-    """Создание тестового пользователя для отладки"""
-    from database.database_models_pg import PostgresModels
-    db = PostgresModels()
-    db.insert_employee(
-        full_name="Тестовый Пользователь",
-        login="test",
-        password_hash="test",  # Пароль в открытом виде
-        role="admin",
-        branch_id=1
-    )
-    print("Тестовый пользователь создан: login='test', password='test'")
+class DatabaseManager:
+    _instance = None
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(DatabaseManager, cls).__new__(cls)
+            cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
+        try:
+            self.pg_models = PostgresModels()
+            self.mongo_models = MongoDBModels()
+            logging.info("Database connections initialized successfully")
+        except Exception as e:
+            logging.critical(f"Database initialization failed: {e}")
+            raise
+
+    def get_pg_models(self):
+        return self.pg_models
+
+    def get_mongo_models(self):
+        return self.mongo_models
+
+    def close_connections(self):
+        try:
+            if hasattr(self, 'pg_models') and hasattr(self.pg_models, 'db'):
+                self.pg_models.db.close_all()
+            if hasattr(self, 'mongo_models') and hasattr(self.mongo_models, 'client'):
+                self.mongo_models.client.close()
+        except Exception as e:
+            logging.error(f"Error closing connections: {e}")
+
+    def log_connection_stats(self):
+        stats = {
+            'postgres': self.pg_models.db.get_pool_stats(),
+            'mongo': self.mongo_models.client.server_info()
+        }
+        logging.info(f"Connection stats: {stats}")
 
 
 def main():
     try:
-        # Для отладки можно раскомментировать создание тестового пользователя
-        create_test_user()
+        # Инициализация менеджера баз данных
+        db_manager = DatabaseManager()
 
         # Создание приложения
         app = QApplication(sys.argv)
@@ -71,11 +103,14 @@ def main():
         # Запускаем цикл событий
         exit_code = app.exec()
 
-        # Корректный выход
+        # Корректный выход - закрываем соединения
+        db_manager.close_connections()
         sys.exit(exit_code)
 
     except Exception as e:
         logging.critical(f"Fatal error: {str(e)}", exc_info=True)
+        if 'db_manager' in locals():
+            db_manager.close_connections()
         sys.exit(1)
 
 if __name__ == "__main__":

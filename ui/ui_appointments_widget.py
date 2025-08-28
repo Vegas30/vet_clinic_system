@@ -435,7 +435,7 @@ class AppointmentDialog(QDialog):
         """Отображает диалог добавления нового животного."""
         dialog = QDialog(self)
         dialog.setWindowTitle("Добавить животное")
-        dialog.setMinimumSize(500, 400)
+        dialog.setMinimumSize(400, 300)
 
         layout = QFormLayout()
 
@@ -443,6 +443,10 @@ class AppointmentDialog(QDialog):
         self.name_edit = QLineEdit()
         self.species_edit = QLineEdit()
         self.breed_edit = QLineEdit()
+        self.birth_date_edit = QDateEdit()
+        self.birth_date_edit.setDate(QDate.currentDate())
+        self.sex_combo = QComboBox()
+        self.sex_combo.addItems(["М", "Ж"])
         self.owner_edit = QLineEdit()
         self.phone_edit = QLineEdit()
         self.phone_edit.setText("+7")  # Устанавливаем +7 по умолчанию
@@ -452,15 +456,11 @@ class AppointmentDialog(QDialog):
         # Добавляем валидатор для ограничения длины
         self.phone_edit.setMaxLength(12)  # +7 и 10 цифр
 
-        # phone_validator = QRegularExpressionValidator(
-        #     QRegularExpression(r"^\+7\d{0,10}$"),  # +7 и до 10 цифр
-        #     self.phone_edit
-        # )
-        # self.phone_edit.setValidator(phone_validator)
-
         layout.addRow("Имя:", self.name_edit)
         layout.addRow("Вид:", self.species_edit)
         layout.addRow("Порода:", self.breed_edit)
+        layout.addRow("Дата рождения:", self.birth_date_edit)
+        layout.addRow("Пол:", self.sex_combo)
         layout.addRow("Хозяин:", self.owner_edit)
         layout.addRow("Телефон:", self.phone_edit)
 

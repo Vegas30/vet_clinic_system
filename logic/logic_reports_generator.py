@@ -1,4 +1,3 @@
-# logic_reports_generator.py
 from datetime import datetime, timedelta
 from PyQt6.QtCore import QDate
 from database.database_models_pg import PostgresModels
@@ -10,6 +9,7 @@ class ReportsGenerator:
     def __init__(self):
         self.db_pg = PostgresModels()
         self.db_mongo = MongoDBModels()
+
 
     def get_date_range(self, period_type, custom_date_from=None, custom_date_to=None):
         """Возвращает даты начала и конца периода в формате строк"""
@@ -35,6 +35,7 @@ class ReportsGenerator:
     def generate_appointments_report(self, date_from, date_to):
         """Генерация отчета по приемам за период с использованием агрегации"""
         try:
+            # Используем один запрос с JOIN вместо множественных запросов
             query = """
                 SELECT 
                     a.id, 
@@ -51,11 +52,9 @@ class ReportsGenerator:
                 ORDER BY a.date, a.time
             """
 
-            conn = self.db_pg.db.connect()
-            if conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(query, (date_from, date_to))
-                    appointments = cursor.fetchall()
+            with self.db_pg._get_cursor() as cursor:
+                cursor.execute(query, (date_from, date_to))
+                appointments = cursor.fetchall()
 
             # Получаем данные животных одним запросом
             animal_ids = [str(appt[3]) for appt in appointments]
@@ -142,11 +141,9 @@ class ReportsGenerator:
                 ORDER BY service_count DESC
             """
 
-            conn = self.db_pg.db.connect()
-            if conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(query, (vet_id, date_from, date_to))
-                    services = cursor.fetchall()
+            with self.db_pg._get_cursor() as cursor:
+                cursor.execute(query, (vet_id, date_from, date_to))
+                services = cursor.fetchall()
 
             # Форматируем для отчета
             report_data = []
@@ -166,57 +163,49 @@ class ReportsGenerator:
 
     def generate_finance_report(self, date_from, date_to):
         """Генерация финансового отчета за период с агрегацией"""
-
-        conn = None
-
         try:
-            conn = self.db_pg.db.connect()
-            if not conn:
-                raise Exception("Не удалось подключиться к базе данных")
-
             # Основные показатели с агрегацией в одном запросе
             main_query = """
-                   SELECT 
-                       COUNT(*) as total_count,
-                       COALESCE(SUM(s.price), 0) as total_income,
-                       COUNT(DISTINCT a.vet_id) as doctors_count
-                   FROM Приёмы a
-                   JOIN Услуги s ON a.service_id = s.id
-                   WHERE a.status = 'завершен' 
-                       AND a.date BETWEEN %s AND %s
-               """
+                SELECT 
+                    COUNT(*) as total_count,
+                    COALESCE(SUM(s.price), 0) as total_income,
+                    COUNT(DISTINCT a.vet_id) as doctors_count
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+            """
 
             # Статистика по услугам с агрегацией
             services_query = """
-                   SELECT 
-                       s.title as service_name,
-                       COUNT(*) as service_count,
-                       COALESCE(SUM(s.price), 0) as service_income
-                   FROM Приёмы a
-                   JOIN Услуги s ON a.service_id = s.id
-                   WHERE a.status = 'завершен' 
-                       AND a.date BETWEEN %s AND %s
-                   GROUP BY s.title
-                   ORDER BY service_count DESC
-               """
+                SELECT 
+                    s.title as service_name,
+                    COUNT(*) as service_count,
+                    COALESCE(SUM(s.price), 0) as service_income
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+                GROUP BY s.title
+                ORDER BY service_count DESC
+            """
 
             # Статистика по врачам с агрегацией
             doctors_query = """
-                   SELECT 
-                       e.full_name as doctor_name,
-                       COUNT(*) as appointment_count,
-                       COALESCE(SUM(s.price), 0) as doctor_income
-                   FROM Приёмы a
-                   JOIN Услуги s ON a.service_id = s.id
-                   JOIN Сотрудники e ON a.vet_id = e.id
-                   WHERE a.status = 'завершен' 
-                       AND a.date BETWEEN %s AND %s
-                   GROUP BY e.full_name
-                   ORDER BY appointment_count DESC
-               """
+                SELECT 
+                    e.full_name as doctor_name,
+                    COUNT(*) as appointment_count,
+                    COALESCE(SUM(s.price), 0) as doctor_income
+                FROM Приёмы a
+                JOIN Услуги s ON a.service_id = s.id
+                JOIN Сотрудники e ON a.vet_id = e.id
+                WHERE a.status = 'завершен' 
+                    AND a.date BETWEEN %s AND %s
+                GROUP BY e.full_name
+                ORDER BY appointment_count DESC
+            """
 
-            # Выполняем все запросы в рамках одного соединения
-            with conn.cursor() as cursor:
+            with self.db_pg._get_cursor() as cursor:
                 cursor.execute(main_query, (date_from, date_to))
                 main_stats = cursor.fetchone()
 
@@ -261,9 +250,6 @@ class ReportsGenerator:
         except Exception as e:
             logging.error(f"Ошибка генерации финансового отчета: {str(e)}")
             return ["Ошибка", "Детали"], [[f"Не удалось сформировать отчет", str(e)]]
-        finally:
-            if conn:
-                self.db_pg.db.disconnect()
 
     def generate_monthly_stats_report(self, year=None, month=None):
         """Генерация месячной статистики с агрегацией"""
@@ -290,11 +276,7 @@ class ReportsGenerator:
 
             query += " GROUP BY month ORDER BY month;"
 
-            conn = self.db_pg.db.connect()
-            if not conn:
-                raise Exception("Не удалось подключиться к базе данных")
-
-            with conn.cursor() as cursor:
+            with self.db_pg._get_cursor() as cursor:
                 cursor.execute(query, tuple(params))
                 stats = cursor.fetchall()
 
@@ -323,52 +305,3 @@ class ReportsGenerator:
         except Exception as e:
             logging.error(f"Ошибка генерации месячного отчета: {str(e)}", exc_info=True)
             return ["Ошибка"], [[f"Ошибка формирования отчета: {str(e)}"]]
-
-    # def generate_yearly_stats_report(self, year=None):
-    #     """Генерация годовой статистики с фильтрацией по году"""
-    #     try:
-    #         conn = self.db_pg.connect()
-    #         with conn.cursor() as cur:
-    #             query = """
-    #                 SELECT
-    #                     EXTRACT(YEAR FROM date) AS year,
-    #                     COUNT(*) AS total_appointments,
-    #                     COALESCE(SUM(s.price), 0) AS total_income
-    #                 FROM Приёмы a
-    #                 JOIN Услуги s ON a.service_id = s.id
-    #                 WHERE a.status = 'завершен'
-    #             """
-    #             params = []
-    #
-    #             if year is not None:
-    #                 query += " AND EXTRACT(YEAR FROM date) = %s"
-    #                 params.append(year)
-    #
-    #             query += " GROUP BY year ORDER BY year DESC"
-    #
-    #             logging.debug(f"Executing yearly stats query: {query} with params: {params}")
-    #             cur.execute(query, params)
-    #             stats = cur.fetchall()
-    #
-    #         # Формируем гарантированно правильную структуру ответа
-    #         headers = ["Год", "Количество приемов", "Доход"]
-    #
-    #         if not stats:
-    #             return headers, []
-    #
-    #         data = []
-    #         for row in stats:
-    #             try:
-    #                 year = int(row[0]) if row[0] is not None else 0
-    #                 appointments = row[1] if row[1] is not None else 0
-    #                 income = float(row[2]) if row[2] is not None else 0.0
-    #                 data.append([year, appointments, income])
-    #             except Exception as e:
-    #                 logging.error(f"Ошибка обработки строки статистики: {row}. Ошибка: {str(e)}")
-    #                 continue
-    #
-    #         return headers, data
-    #
-    #     except Exception as e:
-    #         logging.error(f"Ошибка генерации годового отчета: {str(e)}")
-    #         return ["Ошибка"], [[f"Не удалось получить данные: {str(e)}"]]
